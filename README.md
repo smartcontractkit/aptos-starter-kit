@@ -16,51 +16,69 @@ Get test tokens for the account from the [official faucet](https://aptos.dev/en/
 
 Set the `sender` and `owner` as your generated `account` in the file `~/Move.toml`. The account address can be found in `~/.aptos/config.yaml`
 ```toml
-[package]
-name = "move_starter_kit"
-version = "1.0.0"
-authors = []
-
+...
 [addresses]
-sender = <YOUR_ACCOUNT_ADDRESS>
-owner = <YOUR_ACCOUNT_ADDRESS>
-data_feeds = "0xf1099f135ddddad1c065203431be328a408b0ca452ada70374ce26bd2b32fdd3"
-platform = "0x516e771e1b4a903afe74c27d057c65849ecc1383782f6642d7ff21425f4f9c99"
-move_stdlib = "0x1"
-aptos_std = "0x1"
-
-[dev-addresses]
-
-[dependencies]
-AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework", rev = "main" }
-MoveStdlib = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/move-stdlib", rev = "main" }
-ChainlinkDataFeeds = { local = "./ChainlinkDataFeeds" }
+sender = "<replace sender with your account address>"
+owner = "<replace sender with your account address>"
+...
 ```
 
-## Data Feeds on Aptos
-1. Deploy the module with command.
+## Publish the module on Aptos testnet
+<b>Publish the module with command</b>
 ```shell
 aptos move publish --skip-fetch-latest-git-deps
 ```
+With the command, you will see information like below in terminal:
+```
+Transaction submitted: https://explorer.aptoslabs.com/txn/0x5ac473255ca8e7865d5b620f46e1c21e7fbe413c882bf90254a4f02c7554e86b?network=testnet
+{
+  "Result": {
+    "transaction_hash": "0x5ac473255ca8e7865d5b620f46e1c21e7fbe413c882bf90254a4f02c7554e86b",
+    "gas_used": 1142,
+    "gas_unit_price": 100,
+    "sender": "9c57740685301c316158afd34608cf8286b869ce164301f4903180cc52605ad9",
+    "sequence_number": 2,
+    "success": true,
+    "timestamp_us": 1749639336582974,
+    "version": 6782783566,
+    "vm_status": "Executed successfully"
+  }
+}
+```
+You successfully published the module on the aptos testnet and the module is saved under your account now. The address of the module is the same as your account address. 
 
-2. Fill in the configuration
-Set `PRIVATE_KEY_HEX` and `DATA_FEED_DEMO_MODULE_ADDRESS` in .env.example
+## Install dependencies and set config in `.env`
+1. Run `npm install` to install dependencies.
+
+2. Rename `.env.example` to `.env`.
+
+3. Set `PRIVATE_KEY_HEX`, `STARTER_MODULE_ADDRESS` and `RECEIVER` in `.env`.
 ```
 PRIVATE_KEY_HEX=<YOUR_PRIVATE_KEY_HEX>
-DATA_FEED_DEMO_MODULE_ADDRESS=<YOUR_DATA_FEED_DEMO_MODULE_ADDRESS>
-DATA_FEED_ID=0x01a0b4d920000332000000000000000000000000000000000000000000000000
+DATA_FEED_DEMO_MODULE_ADDRESS=<YOUR_ACCOUNT_ADDRESS>
+RECEIVER=<YOUR_EVM_ADDRESS>
 ```
-Find private key in `~/.aptos/config.yaml` and remove the prefix `ed25519-priv-` and assign it to `PRIVATE_KEY_HEX`. Find the value of account in `~/.aptos/config.yaml` and assign it to `DATA_FEED_DEMO_MODULE_ADDRESS`. 
+`PRIVATE_KEY_HEX` and `STARTER_MODULE_ADDRESS` can be found in `~/.aptos/config.yaml` and remove the prefix `ed25519-priv-` before private key. 
 
-rename the file `.env.example` to `.env`. 
+`RECEIVER` is EVM address that is used to receive the token and messages from Aptos. The address is used for CCIP and You can skip this config if you only want to use data feed. 
 
-3. fetch the BTC/USD feed and save to the account's global storage.
+## Use data feed on aptos testnet
+1. Fetch the BTC/USD feed and save to the account's global storage.
 ```shell
 npx ts-node scripts/fetchPrice.ts
 ```
-You can update `DATA_FEED_ID` to other price feed supported by Chainlink. Please find other data feeds [here](https://docs.chain.link/data-feeds/price-feeds/addresses?page=1&testnetPage=1&network=aptos). 
+You will see infomation like below if the script runs successfully:
+```
+Transaction submitted successfully. Transaction Hash: 0x3aeb1cf2cebafcba9b6a7322c3209c4b2c41a3b48ab8c58b03d93f3d6093764a
+```
+Price you just fetch is Bitcoin price to module `price_feed_demo`. Update `DATA_FEED_ID` if other asset price needs to be fetched. Please find other data feeds supported by Chainlink [here](https://docs.chain.link/data-feeds/price-feeds/addresses?page=1&testnetPage=1&network=aptos). 
 
-4. Retrieve this data using the view function.
+2. Retrieve this data using the view function.
 ```shell
 npx ts-node scripts/getPriceData.ts
+```
+You will see information like below if the script runs successfully:
+```
+Price: 109255000000000000000000
+Timestamp: 1749642370
 ```

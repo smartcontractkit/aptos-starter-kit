@@ -20,11 +20,14 @@ async function getPriceData(): Promise<PriceData | null> {
     const aptos = new Aptos(config);
 
     // Define the module and function details
-    const MODULE_ADDRESS = process.env.DATA_FEED_DEMO_MODULE_ADDRESS;
+    const MODULE_ADDRESS = process.env.STARTER_MODULE_ADDRESS;
     if(MODULE_ADDRESS === undefined) {
-        throw new Error("DATA_FEED_DEMO_MODULE_ADDRESS environment variable is not set.");
+        throw new Error("STARTER_MODULE_ADDRESS environment variable is not set.");
     }
-    const MODULE_NAME = "price_feed_demo";
+    const MODULE_NAME = process.env.DATA_FEED_DEMO_MODULE_NAME;
+    if(MODULE_NAME === undefined) {
+        throw new Error("DATA_FEED_DEMO_MODULE_NAME environment variable is not set.");
+    }
     const FUNCTION_NAME = "get_price_data";
 
     // Account address for which we want to fetch price data

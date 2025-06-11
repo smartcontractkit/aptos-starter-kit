@@ -10,12 +10,17 @@ async function fetchPrice(): Promise<string> {
         const aptos = new Aptos(config);
 
         // Define the module and function details
-        const MODULE_ADDRESS = process.env.DATA_FEED_DEMO_MODULE_ADDRESS;
+        const MODULE_ADDRESS = process.env.STARTER_MODULE_ADDRESS;
         const DATA_FEED_ID = process.env.DATA_FEED_ID;
         if(MODULE_ADDRESS === undefined || DATA_FEED_ID === undefined) {
-            throw new Error("DATA_FEED_DEMO_MODULE_ADDRESS or DATA_FEED_BTC environment variables are not set.");
+            throw new Error("STARTER_MODULE_ADDRESS or DATA_FEED_BTC environment variables are not set.");
         }
-        const moduleName = "price_feed_demo";
+        
+        const MODULE_NAME = process.env.DATA_FEED_DEMO_MODULE_NAME;
+        if(MODULE_NAME === undefined) {
+            throw new Error("DATA_FEED_DEMO_MODULE_NAME environment variable is not set.");
+        }
+        
         const functionName = "fetch_price";
 
         // Account address for which we want to fetch price data
@@ -30,7 +35,7 @@ async function fetchPrice(): Promise<string> {
         const transaction = await aptos.transaction.build.simple({
             sender: account.accountAddress,
             data: {
-                function: `${MODULE_ADDRESS}::${moduleName}::${functionName}`,
+                function: `${MODULE_ADDRESS}::${MODULE_NAME}::${functionName}`,
                 functionArguments: [MoveVector.U8(Hex.hexInputToUint8Array(DATA_FEED_ID))],
             }
         });
