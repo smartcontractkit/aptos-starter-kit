@@ -14,8 +14,10 @@
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^22.15.24",
+    "@types/yargs": "^17.0.33",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "yargs": "^18.0.0"
   },
   "dependencies": {
     "@aptos-labs/ts-sdk": "^2.0.1",

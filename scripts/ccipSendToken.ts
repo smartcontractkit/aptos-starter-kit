@@ -1,6 +1,18 @@
-import { Account, Aptos, AptosConfig, Ed25519PrivateKey, Network, MoveVector, Hex, MoveString } from "@aptos-labs/ts-sdk";
+import { Account, PrivateKey, Aptos, PrivateKeyVariants, AptosConfig, Ed25519PrivateKey, Network, MoveVector, Hex, MoveString } from "@aptos-labs/ts-sdk";
 import  * as dotenv from 'dotenv';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
+
 dotenv.config();
+
+const argv = yargs(hideBin(process.argv))
+  .option('feeToken', {
+    type: 'string',
+    description: 'Specify the fee token (link or native)',
+    demandOption: true,
+    choices: ['link', 'native'],
+  })
+  .parseSync();
 
 // Specify which network to connect to via AptosConfig
 async function sendTokenFromAptosToEvm() {
@@ -19,11 +31,24 @@ async function sendTokenFromAptosToEvm() {
     // Set up the transaction parameters, use the sepolia as destination chain as default
     const destChainSelector = process.env.DESTCHAIN_SELECTOR_ETH_SEPOLIA
     const receiver = process.env.RECEIVER
-    const feeToken = process.env.FEE_TOKEN
+    // const feeToken = process.env.APTOS_FEE_TOKEN_LINK
     const feeTokenStore = process.env.FEE_TOKEN_STORE 
-    if (!destChainSelector || !receiver || !feeToken || !feeTokenStore) {
-        throw new Error("Please set the environment variables DESTCHAIN_SELECTOR, RECEIVER, MESSAGE, FEE_TOKEN, and FEE_TOKEN_STORE.");
+    if (!destChainSelector || !receiver || !feeTokenStore) {
+        throw new Error("Please set the environment variables DESTCHAIN_SELECTOR, RECEIVER, MESSAGE, and FEE_TOKEN_STORE.");
     }
+
+    let feeToken: string | undefined;
+    if (argv.feeToken === 'link') {
+        feeToken = process.env.APTOS_FEE_TOKEN_LINK
+    } else if (argv.feeToken === 'native') {
+        feeToken = process.env.APTOS_FEE_TOKEN_NATIVE
+    } else {
+        feeToken = undefined
+        throw new Error("Invalid fee token specified. Please specify fee token use --feeToken link or --feeToken native.");
+    }
+    if (!feeToken) {
+        throw new Error("Please set the environment variable APTOS_FEE_TOKEN_LINK or APTOS_FEE_TOKEN_NATIVE.");
+    }    
 
     // Set up the CCIP sender module parameters
     const moduleAddr = process.env.STARTER_MODULE_ADDRESS

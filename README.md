@@ -60,10 +60,21 @@ RECEIVER=<YOUR_EVM_ADDRESS>
 ```
 `PRIVATE_KEY_HEX` and `STARTER_MODULE_ADDRESS` can be found in `~/.aptos/config.yaml` and remove the prefix `ed25519-priv-` before private key. 
 
-`RECEIVER` is EVM address that is used to receive the token and messages from Aptos. The address is used for CCIP and You can skip this config if you only want to use data feed. 
+`RECEIVER` is EVM address that is used to receive the token and messages from Aptos. The address is used for CCIP and you can skip this config if you only want to use data feed. 
+
+## Use CCIP to send token from Aptos testnet to Ethereum Sepolia
+1. Send tokens from Aptos testnet to Ethereum Sepolia with CCIP sender. 
+```
+npx ts-node scripts/ccipSendToken.ts --feeToken link
+``` 
+Update the param from `link` to `native` if you want to pay native token (aptos) for CCIP fee. 
+```
+npx ts-node scripts/ccipSendToken.ts --feeToken native
+``` 
+Please make sure you have BnM tokens in your account before running this command.
 
 ## Use data feed on aptos testnet
-1. Fetch the BTC/USD feed and save to the account's global storage.
+1. Fetch the BTC/USD feed and save it to the account's global storage.
 ```shell
 npx ts-node scripts/fetchPrice.ts
 ```
