@@ -63,7 +63,16 @@ RECEIVER=<YOUR_EVM_ADDRESS>
 `RECEIVER` is EVM address that is used to receive the token and messages from Aptos. The address is used for CCIP and you can skip this config if you only want to use data feed. 
 
 ## Use CCIP to send token from Aptos testnet to Ethereum Sepolia
-1. Send tokens from Aptos testnet to Ethereum Sepolia with CCIP sender. 
+1. Send tokens from Aptos testnet to Ethereum Sepolia with CCIP sender by directly calling router module. 
+```
+npx ts-node scripts/ccipSendTokenRouter.ts --feeToken link
+``` 
+Update the param from `link` to `native` if you want to pay native token (aptos) for CCIP fee. 
+```
+npx ts-node scripts/ccipSendTokenRouter.ts --feeToken native
+``` 
+Please make sure you have BnM and fee tokens in your account before running this command.
+2. Send tokens from Aptos testnet to Ethereum Sepolia with CCIP sender with ccip sender module. 
 ```
 npx ts-node scripts/ccipSendToken.ts --feeToken link
 ``` 
@@ -71,7 +80,7 @@ Update the param from `link` to `native` if you want to pay native token (aptos)
 ```
 npx ts-node scripts/ccipSendToken.ts --feeToken native
 ``` 
-Please make sure you have BnM tokens in your account before running this command.
+Please make sure you have BnM and fee tokens in your account before running this command.
 
 ## Use data feed on aptos testnet
 1. Fetch the BTC/USD feed and save it to the account's global storage.

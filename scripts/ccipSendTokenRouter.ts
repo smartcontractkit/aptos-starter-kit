@@ -18,6 +18,30 @@ const argv = yargs(hideBin(process.argv))
   })
   .parseSync();
 
+// Function to encode extra_args as per encode_generic_extra_args_v2(100000, true)
+function encodeGenericExtraArgsV2(gasLimit: bigint, allowOutOfOrderExecution: boolean){
+    const output: number[] = [];
+
+    // 1. Encode selector (GENERIC_EXTRA_ARGS_V2_TAG: 0x181dcf10)
+    output.push(...Hex.hexInputToUint8Array("181dcf10"));
+
+    // 2. Encode gasLimit as u256 (big-endian, 32 bytes)
+    const gasLimitBytes = new Uint8Array(32);
+    const gasLimitBigInt = BigInt(gasLimit);
+    // Convert to big-endian bytes
+    const gasLimitHex = gasLimitBigInt.toString(16).padStart(64, '0'); // 64 hex chars = 32 bytes
+    const gasLimitArray = Hex.hexInputToUint8Array(`0x${gasLimitHex}`);
+    gasLimitBytes.set(gasLimitArray, 32 - gasLimitArray.length); // Right-align in 32 bytes
+    output.push(...gasLimitBytes);
+
+    // 3. Encode boolean (true = 0x00...01, false = 0x00...00)
+    const boolBytes = new Uint8Array(32);
+    boolBytes[31] = allowOutOfOrderExecution ? 1 : 0;
+    output.push(...boolBytes);
+
+    return MoveVector.U8(output);
+}
+
 // Specify which network to connect to via AptosConfig
 async function sendTokenFromAptosToEvm() {
     // Set up the account with the private key
@@ -28,13 +52,10 @@ async function sendTokenFromAptosToEvm() {
     const privateKey = new Ed25519PrivateKey(privateKeyHex);
     const account = Account.fromPrivateKey({privateKey});
 
-    // prepare `${moduleAddr}::${ccipSenderModuleName}::${SENDER_ENTRY_FUNC_NAME}`
-    const moduleAddr = process.env.STARTER_MODULE_ADDRESS
-    if (!moduleAddr) {
-        throw new Error("Please set the environment variables STARTER_MODULE_ADDRESS");
-    }
-    const ccipSenderModuleName = networkConfig.aptos.ccipSenderModuleName;
-    const SENDER_ENTRY_FUNC_NAME = "send_tokens";
+    // prepare `${ccipRouterModuleAddr}::${ccipRouterModuleName}::${SENDER_ENTRY_FUNC_NAME}`
+    const ccipRouterModuleAddr = networkConfig.aptos.ccipObjectAddress
+    const ccipRouterModuleName = networkConfig.aptos.ccipRouterModuleName
+    const SENDER_ENTRY_FUNC_NAME = "ccip_send"
 
     // Prepare the parameters for entry function
     
@@ -81,23 +102,28 @@ async function sendTokenFromAptosToEvm() {
         throw new Error("Please set the environment variables, FEE_TOKEN_STORE.");
     }
 
+    // get extra args for the transaction
+    const extraArgs = encodeGenericExtraArgsV2(100000n, true);
+
     // Setup the client
     const config = new AptosConfig({ network: Network.TESTNET });
     const aptos = new Aptos(config);
 
     // construct the transaction for entry function
-    const transaction = await aptos.transaction.build.simple({
+        const transaction = await aptos.transaction.build.simple({
         sender: account.accountAddress,
         data: {
-            function: `${moduleAddr}::${ccipSenderModuleName}::${SENDER_ENTRY_FUNC_NAME}`,
+            function: `${ccipRouterModuleAddr}::${ccipRouterModuleName}::${SENDER_ENTRY_FUNC_NAME}`,
             functionArguments: [
                 destChainSelector,
                 MoveVector.U8(Hex.hexInputToUint8Array(paddedReceiverArray)),
+                MoveVector.U8([]),
                 [ccipBnMTokenAddr],
                 MoveVector.U64([TOKEN_AMOUNT_TO_SEND]),
                 [TOKEN_STORE_ADDR],
                 feeToken,
-                feeTokenStore
+                feeTokenStore,
+                extraArgs
             ],
         }
     });
