@@ -1,4 +1,4 @@
-import { Account, PrivateKey, Aptos, PrivateKeyVariants, AptosConfig, Ed25519PrivateKey, Network, MoveVector, Hex, MoveString } from "@aptos-labs/ts-sdk";
+import { Account, Aptos, AptosConfig, Ed25519PrivateKey, Network, MoveVector, Hex } from "@aptos-labs/ts-sdk";
 import  * as dotenv from 'dotenv';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';

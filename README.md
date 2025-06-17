@@ -82,6 +82,18 @@ npx ts-node scripts/ccipSendToken.ts --feeToken native
 ``` 
 Please make sure you have BnM and fee tokens in your account before running this command.
 
+3. Check the status on Sepolia
+
+Set the `ETHEREUM_SEPOLIA_RPC_URL` in `.env` before check the status on ethereum sepolia. 
+
+A transaction hash is returned in when the CCIP message is sent successfully. Run the command with transaction hash:
+```
+npx ts-node scripts/checkMsgExecutionStateOnSepolia.ts --txHash <Your Transaction Hash from last step>
+```
+If you see the message below, you might need to wait more time for CCIP to execute your message on destination chain. Or you wait for too long time that the execution is beyond the latest 500 blocks in destination chain. 
+```
+No messageId found in within the last 500 blocks
+```
 ## Use data feed on aptos testnet
 1. Fetch the BTC/USD feed and save it to the account's global storage.
 ```shell

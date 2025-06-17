@@ -1,4 +1,4 @@
-import { Account, PrivateKey, Aptos, PrivateKeyVariants, AptosConfig, Ed25519PrivateKey, Network, MoveVector, Hex, MoveString } from "@aptos-labs/ts-sdk";
+import { Account, Aptos, AptosConfig, Ed25519PrivateKey, Network, MoveVector, Hex } from "@aptos-labs/ts-sdk";
 import  * as dotenv from 'dotenv';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
@@ -37,7 +37,6 @@ async function sendTokenFromAptosToEvm() {
     const SENDER_ENTRY_FUNC_NAME = "send_tokens";
 
     // Prepare the parameters for entry function
-    
     // Chain selector
     // TODO: make this dynamic based on user's input
     const destChainSelector = networkConfig.sepolia.chainSelector
@@ -92,7 +91,7 @@ async function sendTokenFromAptosToEvm() {
             function: `${moduleAddr}::${ccipSenderModuleName}::${SENDER_ENTRY_FUNC_NAME}`,
             functionArguments: [
                 destChainSelector,
-                MoveVector.U8(Hex.hexInputToUint8Array(paddedReceiverArray)),
+                MoveVector.U8(paddedReceiverArray),
                 [ccipBnMTokenAddr],
                 MoveVector.U64([TOKEN_AMOUNT_TO_SEND]),
                 [TOKEN_STORE_ADDR],
@@ -107,7 +106,7 @@ async function sendTokenFromAptosToEvm() {
         signerPublicKey: account.publicKey,
         transaction,
     });
-    
+
     if(!userTransactionResponse.success) {
         throw new Error(`Transaction simulation failed: ${userTransactionResponse.vm_status}`);
     }
@@ -128,8 +127,6 @@ async function sendTokenFromAptosToEvm() {
     const executed = await aptos.transaction.waitForTransaction({
         transactionHash: committedTransaction.hash,
     })
-
-    console.log(executed);
 
     if(executed.success === false) {
         throw new Error(`Transaction execution failed: ${executed.vm_status}`);

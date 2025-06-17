@@ -22,6 +22,6 @@
   "dependencies": {
     "@aptos-labs/ts-sdk": "^2.0.1",
     "dotenv": "^16.5.0",
-    "ethers": "^6.14.3"
+    "ethers": "^6.14.4"
   }
 }
