@@ -94,6 +94,23 @@ If you see the message below, you might need to wait more time for CCIP to execu
 ```
 No messageId found in within the last 500 blocks
 ```
+## Use CCIP to send token from Ethereum Sepolia to Aptos testnet
+1. Send tokens from Ethereum Sepolia to by directly calling router contract
+
+Set the `PRIVATE_KEY` in `.env`. It is your EVM private key. 
+
+Run command to send ccip message paying sepoliaETH
+```
+npx ts-node scripts/sepolia-aptos/transferTokenPayNative.ts
+```
+2. Check the status of CCIP message on Aptos testnet
+
+Run command to check the event
+```
+npx ts-node scripts/sepolia-aptos/checkExecutionStateOnAptos.ts --msgId <your ccip message id>
+```
+you will see `Execution state for ccip message <your ccip message id> is SUCCESS` if the message is executed successfully on aptos. 
+run 
 ## Use data feed on aptos testnet
 1. Fetch the BTC/USD feed and save it to the account's global storage.
 ```shell
