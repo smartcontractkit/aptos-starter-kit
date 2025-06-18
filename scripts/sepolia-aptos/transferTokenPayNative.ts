@@ -104,8 +104,15 @@ async function extractCCIPMessageId(
     return null;
 }
 
-async function transferTokenPayNative(recipient: string, tokenAmount: number) {
+async function transferTokenPayNative(tokenAmount: number) {
     // console.log(await ccipRouterContract.isChainSupported(config.aptos.chainSelector));
+        
+    // get the aptos receiver from .env file
+    let recipient = process.env.APTOS_RECEIVER;
+    if(!recipient) {
+        throw new Error("Please set the APTOS_RECEIVER in .env");
+    }
+    
     try {
 
         const ccipMessage = buildCCIPMessage(
@@ -151,4 +158,4 @@ async function transferTokenPayNative(recipient: string, tokenAmount: number) {
 
 }
 
-transferTokenPayNative("0xd0e227835c33932721d54ae401cfaae753c295024fe454aa029b5e2782d2fad4", 0.001)
+transferTokenPayNative(0.001)

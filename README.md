@@ -97,7 +97,7 @@ No messageId found in within the last 500 blocks
 ## Use CCIP to send token from Ethereum Sepolia to Aptos testnet
 1. Send tokens from Ethereum Sepolia to by directly calling router contract
 
-Set the `PRIVATE_KEY` in `.env`. It is your EVM private key. 
+Set the `PRIVATE_KEY` and `APTOS_RECEIVER` in `.env`. `PRIVATE_KEY` is your EVM private key. `APTOS_RECEIVER` is the account address to receive the tokens from eth sepolia. 
 
 Run command to send ccip message paying sepoliaETH
 ```
