@@ -2,7 +2,7 @@ import { ethers } from "ethers";
 import RouterABI from '../config/abi/Router';
 import ERC20_ABI from '../config/abi/ERC20';
 import OnRamp_1_6_ABI from "../config/abi/OnRamp_1_6";
-import { config } from '../config/config';
+import { networkConfig } from "../../helper-config";
 
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -21,13 +21,13 @@ const provider = new ethers.JsonRpcProvider(ethereumSepoliaRpcUrl);
 const wallet = new ethers.Wallet(privateKey, provider);
 
 const ccipRouterContract = new ethers.Contract(
-    config.sepolia.ccipRouterAddress,
+    networkConfig.sepolia.ccipRouterAddress,
     RouterABI,
     wallet
 );
 
 const ccipOnRampContract = new ethers.Contract(
-    config.sepolia.ccipOnrampAddress,
+    networkConfig.sepolia.ccipOnrampAddress,
     OnRamp_1_6_ABI,
     wallet
 );
@@ -38,7 +38,7 @@ async function approveToken(
 ) {
     const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, wallet);
 
-    const currentAllowance: bigint = await tokenContract.allowance(wallet.address, config.sepolia.ccipRouterAddress);
+    const currentAllowance: bigint = await tokenContract.allowance(wallet.address, networkConfig.sepolia.ccipRouterAddress);
     console.log(`Current Allowance of ${await tokenContract.symbol()} token:`, currentAllowance.toString());
 
     if (currentAllowance >= amount) {
@@ -46,7 +46,7 @@ async function approveToken(
         return;
     }
 
-    const tx = await tokenContract.approve(config.sepolia.ccipRouterAddress, amount);
+    const tx = await tokenContract.approve(networkConfig.sepolia.ccipRouterAddress, amount);
     console.log("Approval tx sent:", tx.hash);
     const receipt = await tx.wait();
     console.log("Approval confirmed in block:", receipt.blockNumber);
@@ -105,7 +105,7 @@ async function extractCCIPMessageId(
 }
 
 async function transferTokenPayNative(tokenAmount: number) {
-    // console.log(await ccipRouterContract.isChainSupported(config.aptos.chainSelector));
+    // console.log(await ccipRouterContract.isChainSupported(networkConfig.aptos.chainSelector));
         
     // get the aptos receiver from .env file
     let recipient = process.env.APTOS_RECEIVER;
@@ -118,13 +118,13 @@ async function transferTokenPayNative(tokenAmount: number) {
         const ccipMessage = buildCCIPMessage(
             recipient,
             "0x", // No message data
-            config.sepolia.ccipBnMTokenAddress,
+            networkConfig.sepolia.ccipBnMTokenAddress,
             ethers.parseUnits(tokenAmount.toString()),
             ethers.ZeroAddress, // Fee token is set to zero address (in case of using native token as fee)
             encodeExtraArgsV2(0n, true) // Gas limit set to 0 (because transferring to EOA), OoO (Out of Order) execution enabled
         );
 
-        const baseFee: bigint = await ccipRouterContract.getFee(config.aptos.chainSelector, ccipMessage);
+        const baseFee: bigint = await ccipRouterContract.getFee(networkConfig.aptos.chainSelector, ccipMessage);
 
         // Add 20% margin
         const margin = baseFee / 5n; // 20% of base fee
@@ -134,12 +134,12 @@ async function transferTokenPayNative(tokenAmount: number) {
         console.log("Fee with 20% buffer (in WEI):", feeWithBuffer.toString());
 
         // Approve the token transfer
-        await approveToken(config.sepolia.ccipBnMTokenAddress, ethers.parseUnits(tokenAmount.toString()));
+        await approveToken(networkConfig.sepolia.ccipBnMTokenAddress, ethers.parseUnits(tokenAmount.toString()));
 
         console.log("Proceeding with the token transfer...");
 
         const tx = await ccipRouterContract.ccipSend(
-            config.aptos.chainSelector,
+            networkConfig.aptos.chainSelector,
             ccipMessage,
             {
                 value: feeWithBuffer, // Send the fee in native currency (ETH)

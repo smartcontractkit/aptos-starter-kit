@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import OffRamp_1_6_ABI from "./config/abi/OffRamp_1_6";
-import { config } from './config/config';
+import { networkConfig } from "../helper-config";
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
@@ -64,7 +64,7 @@ async function findExecutionStateChangeByMessageId() {
     const latestBlock = await provider.getBlockNumber();
 
     const logs = await provider.getLogs({
-        address: config.sepolia.ccipOfframpAddress,
+        address: networkConfig.sepolia.ccipOfframpAddress,
         fromBlock: latestBlock - 499, // Using a range of 500 blocks considering the RPC limits
         toBlock: latestBlock,
         topics: [eventTopic],
