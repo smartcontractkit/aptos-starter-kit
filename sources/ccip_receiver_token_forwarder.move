@@ -1,15 +1,16 @@
 module sender::ccip_receiver_token_forwarder {
     use std::account;
     use std::event;
-    use std::object::Object;
+    use std::object::{Self, Object};
     use std::option::{Self, Option};
     use std::signer;
     use std::string::{Self, String};
     use std::vector;
-    use std::bcs;
 
     use std::fungible_asset::{Self, Metadata};
     use std::primary_fungible_store;
+    use std::bcs;
+    
 
     use ccip::client;
     use ccip::receiver_registry;
@@ -45,11 +46,11 @@ module sender::ccip_receiver_token_forwarder {
 
     struct CCIPReceiverProof has drop {}
 
-
     public fun ccip_receive<T: key>(_metadata: Object<T>): Option<u128> acquires CCIPReceiverState {
         let message = receiver_registry::get_receiver_input(
             @sender, CCIPReceiverProof {}
         );
+
         let data = client::get_data(&message);
 
         let dest_token_amounts = client::get_dest_token_amounts(&message);
@@ -60,10 +61,17 @@ module sender::ccip_receiver_token_forwarder {
             let token_amount_ref = vector::borrow(&dest_token_amounts, i);
             let token_addr = client::get_token(token_amount_ref);
             let amount = client::get_amount(token_amount_ref);
-            // // Implement the token transfer logic here
-            // // Transfer the amount to the recipient address in `data`
+            // Implement the token transfer logic here
 
-            // fungible_asset::transfer
+            let fa_object: Object<Metadata> = object::address_to_object<Metadata>(token_addr);
+            let fa_store_sender = primary_fungible_store::ensure_primary_store_exists(@sender, fa_object);
+            // let addr: address = @data; // Throwing error: address 'data' is not assigned a value. Try assigning it a value when calling the compiler
+            // let fa_store_receiver = primary_fungible_store::ensure_primary_store_exists(@data, fa_object); // Throwing error: address 'data' is not assigned a value. Try assigning it a value when calling the compiler
+            let addr: address = @0x8b92773f2ba89be5e06cb632085a63940510984830856c0724acd359dec035b2; 
+            let fa_store_receiver = primary_fungible_store::ensure_primary_store_exists(addr, fa_object); // Working fine
+
+            // fungible_asset::transfer(/* how to get signer to use here? */, fa_store_sender, fa_store_receiver, amount); // Or, is there any alternative to fungible_asset::transfer that could be achieved without signer?
+
             i = i + 1;
         };
 
