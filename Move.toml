@@ -13,14 +13,21 @@ aptos_std = "0x1"
 ccip = "0xe9dbfbe04b92f7df3b6ab946ec62f88b37c638f25122ec0d0a99a5fd64ac0dd3"
 mcms = "0x81c52f1a89987871c0a1547f50b2feceb8a16add08e575ebdef27cdad9d0be8c"
 mcms_register_entrypoints = "0x0"
-ccip_onramp="0xe9dbfbe04b92f7df3b6ab946ec62f88b37c638f25122ec0d0a99a5fd64ac0dd3"
-ccip_router="0xe9dbfbe04b92f7df3b6ab946ec62f88b37c638f25122ec0d0a99a5fd64ac0dd3"
+ccip_onramp = "0xe9dbfbe04b92f7df3b6ab946ec62f88b37c638f25122ec0d0a99a5fd64ac0dd3"
+ccip_router = "0xe9dbfbe04b92f7df3b6ab946ec62f88b37c638f25122ec0d0a99a5fd64ac0dd3"
+deployer = "_"
 
 [dev-addresses]
+deployer = "0x99"
+ccip_token_pool = "0x2001"
+burn_mint_local_token = "0x9000"
+lock_release_local_token = "0x6d1c246126d36fea774b12486de0a3737997f1b9b23806c67ca5ce72859ff5fa"
+burn_mint_token_pool = "0x2000"
+lock_release_token_pool = "0x2e1f4cc8fbc2c7ccd2c67ff453e00526919098304d70708ef504af944d6fede8"
 
 [dependencies]
 AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework", rev = "mainnet" }
 MoveStdlib = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/move-stdlib", rev = "main" }
 ChainlinkDataFeeds = { local = "./ChainlinkDataFeeds" }
 ChainlinkCCIPRouter = { git = "https://github.com/smartcontractkit/chainlink-aptos.git", subdir = "contracts/ccip/ccip_router", rev = "develop" }
-ChainlinkCCIP = {git = "https://github.com/smartcontractkit/chainlink-aptos.git", subdir = "contracts/ccip/ccip", rev = "develop" }
+ChainlinkCCIP = { git = "https://github.com/smartcontractkit/chainlink-aptos.git", subdir = "contracts/ccip/ccip", rev = "develop" }
