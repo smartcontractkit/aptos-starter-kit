@@ -10,11 +10,11 @@ data_feeds = "0xf1099f135ddddad1c065203431be328a408b0ca452ada70374ce26bd2b32fdd3
 platform = "0x516e771e1b4a903afe74c27d057c65849ecc1383782f6642d7ff21425f4f9c99"
 move_stdlib = "0x1"
 aptos_std = "0x1"
-ccip = "0xe9dbfbe04b92f7df3b6ab946ec62f88b37c638f25122ec0d0a99a5fd64ac0dd3"
-mcms = "0x81c52f1a89987871c0a1547f50b2feceb8a16add08e575ebdef27cdad9d0be8c"
+ccip = "0xbf9c97104a501e238a10ef1180386d4c030dbd9834a557cfcb016e85d929fdaf"
+mcms = "0x5766a70250989316dfa20858bba1c6a930226803a2162247a432a7d8e0e81a45"
 mcms_register_entrypoints = "0x0"
-ccip_onramp = "0xe9dbfbe04b92f7df3b6ab946ec62f88b37c638f25122ec0d0a99a5fd64ac0dd3"
-ccip_router = "0xe9dbfbe04b92f7df3b6ab946ec62f88b37c638f25122ec0d0a99a5fd64ac0dd3"
+ccip_onramp = "0xbf9c97104a501e238a10ef1180386d4c030dbd9834a557cfcb016e85d929fdaf"
+ccip_router = "0xbf9c97104a501e238a10ef1180386d4c030dbd9834a557cfcb016e85d929fdaf"
 deployer = "_"
 
 [dev-addresses]

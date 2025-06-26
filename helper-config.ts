@@ -1,18 +1,22 @@
 export const networkConfig = {
     aptos: {
         chainSelector: "743186221051783445",
-        ccipObjectAddress: "0xe9dbfbe04b92f7df3b6ab946ec62f88b37c638f25122ec0d0a99a5fd64ac0dd3",
+        ccipObjectAddress: "0xbf9c97104a501e238a10ef1180386d4c030dbd9834a557cfcb016e85d929fdaf",
         ccipRouterModuleName: "router",
         ccipOfframpModuleName: "offramp",
         ccipOnrampModuleName: "onramp",
-        ccipBnMTokenAddress: "0x278e411ae68131d9e87213761f89db960c51f8b2e93cabfa07f034a436a883a3",
+        ccipBnMTokenAddress: "0x9fb6e529e89805611769c76f7d5b6bfc557f04ec9ec69156bdb490e3403246b8",
         feeTokenNameLink: "link",
-        linkTokenAddress: "0x8c20817245024d8cdfeb7b1e673e8e470585e74f7b860962c3caa668c2fa3542",
+        linkTokenAddress: "0x8873d0d9aa0e1d7bf7a42de620906d51f535314c72f27032bcaaf5519a22fec9",
         feeTokenNameNative: "native",
         nativeTokenAddress: "0xa",
         dataFeedDemoModuleName: "price_feed_demo",
         dataFeedId: "0x01a0b4d920000332000000000000000000000000000000000000000000000000",
         ccipSenderModuleName: "ccip_message_sender",
+        destChains: {
+            ethereumSepolia: "sepolia",
+            avalancheFuji: "fuji"
+        }
     },
     sepolia: {
         chainSelector: "16015286601757825753",
@@ -24,5 +28,10 @@ export const networkConfig = {
     },
     avalancheFuji: {
         chainSelector: "14767482510784806043",
+        ccipRouterAddress: "0x8cEc1C22Fc5382633b7Ac5F07Cdd82FF3fB72C67",
+        ccipOfframpAddress: "0xe9fA9D0de47a0B606C1A9af09746cCe82C82c8C3",
+        ccipOnrampAddress: "0x6ebe6c93878586dDF1825134E2144Fb737b54bdd",
+        ccipBnMTokenAddress: "0xD21341536c5cF5EB1bcb58f6723cE26e8D8E90e4",
+        linkTokenAddress: "0x0b9d5D9136855f6FEc3c0993feE6E9CE8a297846",
     }
 }
