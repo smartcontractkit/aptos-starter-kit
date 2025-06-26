@@ -1,4 +1,4 @@
-import { Account, Aptos, AptosConfig, Ed25519PrivateKey, Network, MoveVector, Hex } from "@aptos-labs/ts-sdk";
+import { Account, Aptos, AptosConfig, Ed25519PrivateKey, Network, MoveVector, Hex, Serializer } from "@aptos-labs/ts-sdk";
 import  * as dotenv from 'dotenv';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
@@ -26,28 +26,38 @@ const argv = yargs(hideBin(process.argv))
   })
   .parseSync();
 
-// Function to encode extra_args as per encode_generic_extra_args_v2(100000, true)
-function encodeGenericExtraArgsV2(gasLimit: bigint, allowOutOfOrderExecution: boolean){
-    const output: number[] = [];
+const GENERIC_EXTRA_ARGS_V2_TAG: number[] = [0x18, 0x1d, 0xcf, 0x10];
 
-    // 1. Encode selector (GENERIC_EXTRA_ARGS_V2_TAG: 0x181dcf10)
-    output.push(...Hex.hexInputToUint8Array("181dcf10"));
+function encodeGenericExtraArgsV2(gasLimit: bigint, allowOutOfOrderExecution: boolean): Uint8Array {
+    // Initialize an empty array to store the encoded bytes
+    let extraArgs: number[] = [];
 
-    // 2. Encode gasLimit as u256 (big-endian, 32 bytes)
-    const gasLimitBytes = new Uint8Array(32);
-    const gasLimitBigInt = BigInt(gasLimit);
-    // Convert to big-endian bytes
-    const gasLimitHex = gasLimitBigInt.toString(16).padStart(64, '0'); // 64 hex chars = 32 bytes
-    const gasLimitArray = Hex.hexInputToUint8Array(`0x${gasLimitHex}`);
-    gasLimitBytes.set(gasLimitArray, 32 - gasLimitArray.length); // Right-align in 32 bytes
-    output.push(...gasLimitBytes);
+    // Append the GENERIC_EXTRA_ARGS_V2_TAG (assuming it's a predefined constant)
+    extraArgs.push(...GENERIC_EXTRA_ARGS_V2_TAG);
 
-    // 3. Encode boolean (true = 0x00...01, false = 0x00...00)
-    const boolBytes = new Uint8Array(32);
-    boolBytes[31] = allowOutOfOrderExecution ? 1 : 0;
-    output.push(...boolBytes);
+    // Encode gasLimit (u256) as bytes
+    // Note: BigInt to bytes conversion might require a library or custom implementation
+    const gasLimitBytes = bigIntToBytes(gasLimit);
+    extraArgs.push(...gasLimitBytes);
 
-    return MoveVector.U8(output);
+    // Encode allowOutOfOrderExecution (boolean) as bytes
+    const boolBytes = [allowOutOfOrderExecution ? 1 : 0];
+    extraArgs.push(...boolBytes);
+
+    // Convert the array to Uint8Array and return
+    return new Uint8Array(extraArgs);
+}
+
+// Helper function to convert BigInt to bytes
+function bigIntToBytes(value: bigint): number[] {
+    // Assuming little-endian encoding for u256 (32 bytes)
+    const bytes = new Array<number>(32).fill(0);
+    let val = value;
+    for (let i = 0; i < 32 && val > 0; i++) {
+        bytes[i] = Number(val & BigInt(0xff));
+        val >>= BigInt(8);
+    }
+    return bytes;
 }
 
 // Specify which network to connect to via AptosConfig
