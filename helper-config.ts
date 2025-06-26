@@ -19,6 +19,7 @@ export const networkConfig = {
         }
     },
     sepolia: {
+        networkName: "sepolia",
         chainSelector: "16015286601757825753",
         ccipRouterAddress: "0x85634Ebafbc5D71d6606D4ea76630941B0e18Cee",
         ccipOfframpAddress: "0xe3d660848B680355a90b8E7fD4E4a1f63F3522D7",
@@ -27,6 +28,7 @@ export const networkConfig = {
         linkTokenAddress: "0x779877A7B0D9E8603169DdbD7836e478b4624789",
     },
     avalancheFuji: {
+        networkName: "fuji",
         chainSelector: "14767482510784806043",
         ccipRouterAddress: "0x8cEc1C22Fc5382633b7Ac5F07Cdd82FF3fB72C67",
         ccipOfframpAddress: "0xe9fA9D0de47a0B606C1A9af09746cCe82C82c8C3",
