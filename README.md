@@ -65,7 +65,7 @@ RECEIVER=<YOUR_EVM_ADDRESS>
 ## Use CCIP to send token from Aptos testnet to Ethereum Sepolia
 1. Send tokens from Aptos testnet to Ethereum Sepolia with CCIP sender by directly calling router module. 
 ```
-npx ts-node scripts/ccipSendTokenRouter.ts --feeToken link
+npx ts-node scripts/ccipSendTokenRouter.ts --feeToken link --destChain fuji
 ``` 
 Update the param from `link` to `native` if you want to pay native token (aptos) for CCIP fee. 
 ```

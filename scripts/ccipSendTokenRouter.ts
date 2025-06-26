@@ -15,6 +15,14 @@ const argv = yargs(hideBin(process.argv))
         networkConfig.aptos.feeTokenNameLink, 
         networkConfig.aptos.feeTokenNameNative
     ],
+  }).option("destChain", {
+    type: 'string',
+    description: 'Specify the destination chain where the token will be sent',
+    demandOption: true,
+    choices: [
+        networkConfig.aptos.destChains.ethereumSepolia,
+        networkConfig.aptos.destChains.avalancheFuji
+    ]
   })
   .parseSync();
 
@@ -60,8 +68,15 @@ async function sendTokenFromAptosToEvm() {
     // Prepare the parameters for entry function
     
     // Chain selector
-    // TODO: make this dynamic based on user's input
-    const destChainSelector = networkConfig.sepolia.chainSelector
+    let destChainSelector: string | undefined;
+    if(argv.destChain === networkConfig.aptos.destChains.ethereumSepolia) {
+        destChainSelector = networkConfig.sepolia.chainSelector
+    } else if(argv.destChain === networkConfig.aptos.destChains.avalancheFuji) {
+        destChainSelector = networkConfig.avalancheFuji.chainSelector
+    } else {
+        destChainSelector = undefined
+        throw new Error("Invalid destination chain specified. Please specify --destChain sepolia or --destChain fuji.");
+    }
 
     // Fetch the receiver address and pad it to 32 bytes
     const receiver = process.env.RECEIVER
