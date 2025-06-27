@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers, toUtf8Bytes, hexlify } from "ethers";
 import RouterABI from '../config/abi/Router';
 import ERC20_ABI from '../config/abi/ERC20';
 import OnRamp_1_6_ABI from "../config/abi/OnRamp_1_6";
@@ -56,15 +56,13 @@ async function approveToken(
 function buildCCIPMessage(
     recipient: string,
     data: string,
-    token: string,
-    amount: bigint,
     feeToken: string,
     extraArgs: string
 ): Array<any> {
     return [
         recipient,
         data,
-        [{ token, amount }],
+        [],
         feeToken,
         extraArgs
     ];
@@ -104,7 +102,7 @@ async function extractCCIPMessageId(
     return null;
 }
 
-async function transferTokenPayLink(tokenAmount: number) {
+async function transferTokenPayLink() {
     // console.log(await ccipRouterContract.isChainSupported(networkConfig.aptos.chainSelector));
             
     // get the aptos receiver from .env file
@@ -117,9 +115,7 @@ async function transferTokenPayLink(tokenAmount: number) {
 
         const ccipMessage = buildCCIPMessage(
             recipient,
-            "0x", // No message data
-            networkConfig.sepolia.ccipBnMTokenAddress,
-            ethers.parseUnits(tokenAmount.toString()),
+            hexlify(toUtf8Bytes("Hello world!")), // test data, can be any valid hex string
             networkConfig.sepolia.linkTokenAddress,
             encodeExtraArgsV2(0n, true) // Gas limit set to 0 (because transferring to EOA), OoO (Out of Order) execution enabled
         );
@@ -132,9 +128,6 @@ async function transferTokenPayLink(tokenAmount: number) {
 
         console.log("Base Fee (in LINK JUELS):", baseFee.toString());
         console.log("Fee with 20% buffer (in LINK JUELS):", feeWithBuffer.toString());
-
-        // Approve the token transfer
-        await approveToken(networkConfig.sepolia.ccipBnMTokenAddress, ethers.parseUnits(tokenAmount.toString()));
 
         // Approve the LINK token for fee payment
         await approveToken(networkConfig.sepolia.linkTokenAddress, feeWithBuffer);
@@ -158,4 +151,4 @@ async function transferTokenPayLink(tokenAmount: number) {
 
 }
 
-transferTokenPayLink(0.001)
+transferTokenPayLink()
