@@ -2,7 +2,7 @@ import { Account, Aptos, AptosConfig, Ed25519PrivateKey, Network, MoveVector, He
 import  * as dotenv from 'dotenv';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { networkConfig } from "../helper-config";
+import { networkConfig } from "../../helper-config";
 dotenv.config();
 
 const argv = yargs(hideBin(process.argv))

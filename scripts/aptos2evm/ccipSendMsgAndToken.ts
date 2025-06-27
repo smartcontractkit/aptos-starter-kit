@@ -1,9 +1,8 @@
-import { Account, Aptos, AptosConfig, Ed25519PrivateKey, Network, MoveVector, Hex } from "@aptos-labs/ts-sdk";
+import { Account, Aptos, AptosConfig, Ed25519PrivateKey, Network, MoveVector, Hex, MoveString } from "@aptos-labs/ts-sdk";
 import  * as dotenv from 'dotenv';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { networkConfig } from "../helper-config";
-
+import { networkConfig } from "../../helper-config";
 dotenv.config();
 
 const argv = yargs(hideBin(process.argv))
@@ -18,8 +17,9 @@ const argv = yargs(hideBin(process.argv))
   })
   .parseSync();
 
+
 // Specify which network to connect to via AptosConfig
-async function sendTokenFromAptosToEvm() {
+async function sendMsgAndTokenFromAptosToEvm() {
     // Set up the account with the private key
     const privateKeyHex = process.env.PRIVATE_KEY_HEX;
     if (!privateKeyHex) {
@@ -31,10 +31,10 @@ async function sendTokenFromAptosToEvm() {
     // prepare `${moduleAddr}::${ccipSenderModuleName}::${SENDER_ENTRY_FUNC_NAME}`
     const moduleAddr = process.env.STARTER_MODULE_ADDRESS
     if (!moduleAddr) {
-        throw new Error("Please set the environment variables STARTER_MODULE_ADDRESS");
+        throw new Error("Please set the STARTER_MODULE_ADDRESS in file .env");
     }
     const ccipSenderModuleName = networkConfig.aptos.ccipSenderModuleName;
-    const SENDER_ENTRY_FUNC_NAME = "send_tokens";
+    const SENDER_ENTRY_FUNC_NAME = "send_message_with_tokens";
 
     // Prepare the parameters for entry function
     // Chain selector
@@ -59,6 +59,9 @@ async function sendTokenFromAptosToEvm() {
     const TOKEN_AMOUNT_TO_SEND = 10000000
     const TOKEN_STORE_ADDR = "0x0"
 
+    // set the message to be sent
+    const messageUint8Array = new TextEncoder().encode("hello");
+
     // fee token address and store address
     // fee token is decided by user input
     // TODO: move token store addr to config file, Is the token store address always 0x0?
@@ -79,19 +82,20 @@ async function sendTokenFromAptosToEvm() {
     if (!feeTokenStore) {
         throw new Error("Please set the environment variables, FEE_TOKEN_STORE.");
     }
-
+    
     // Setup the client
     const config = new AptosConfig({ network: Network.TESTNET });
     const aptos = new Aptos(config);
 
-    // construct the transaction for entry function
+    // construct the transaction to send a CCIP message
     const transaction = await aptos.transaction.build.simple({
         sender: account.accountAddress,
         data: {
             function: `${moduleAddr}::${ccipSenderModuleName}::${SENDER_ENTRY_FUNC_NAME}`,
             functionArguments: [
                 destChainSelector,
-                MoveVector.U8(paddedReceiverArray),
+                MoveVector.U8(Hex.hexInputToUint8Array(paddedReceiverArray)),
+                MoveVector.U8(Hex.hexInputToUint8Array(messageUint8Array)),
                 [ccipBnMTokenAddr],
                 MoveVector.U64([TOKEN_AMOUNT_TO_SEND]),
                 [TOKEN_STORE_ADDR],
@@ -106,7 +110,7 @@ async function sendTokenFromAptosToEvm() {
         signerPublicKey: account.publicKey,
         transaction,
     });
-
+    
     if(!userTransactionResponse.success) {
         throw new Error(`Transaction simulation failed: ${userTransactionResponse.vm_status}`);
     }
@@ -128,6 +132,8 @@ async function sendTokenFromAptosToEvm() {
         transactionHash: committedTransaction.hash,
     })
 
+    console.log(executed);
+
     if(executed.success === false) {
         throw new Error(`Transaction execution failed: ${executed.vm_status}`);
     }
@@ -135,4 +141,4 @@ async function sendTokenFromAptosToEvm() {
     console.log("Transaction submitted successfully. Transaction Hash:", executed.hash);
 }
  
-sendTokenFromAptosToEvm()
+sendMsgAndTokenFromAptosToEvm()

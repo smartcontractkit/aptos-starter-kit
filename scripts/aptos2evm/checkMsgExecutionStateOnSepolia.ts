@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
-import OffRamp_1_6_ABI from "./config/abi/OffRamp_1_6";
-import { networkConfig } from "../helper-config";
+import OffRamp_1_6_ABI from "../config/abi/OffRamp_1_6";
+import { networkConfig } from "../../helper-config";
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
@@ -13,15 +13,23 @@ const argv = yargs(hideBin(process.argv))
     type: 'string',
     description: 'Specify the transaction hash for ccip_send',
     demandOption: true,
+  }).option("destChain", {
+    type: 'string',
+    description: 'Specify the destination chain where the token will be sent',
+    demandOption: true,
+    choices: [
+        networkConfig.aptos.destChains.ethereumSepolia,
+        networkConfig.aptos.destChains.avalancheFuji
+    ]
   })
   .parseSync();
 
-const ethereumSepoliaRpcUrl = process.env.ETHEREUM_SEPOLIA_RPC_URL;
-if (!ethereumSepoliaRpcUrl) {
+const rpcUrl = process.env.ETHEREUM_AVALANCHE_RPC_URL;
+if (!rpcUrl) {
     throw new Error("Please set the environment variable ETHEREUM_SEPOLIA_RPC_URL.");
 }
 
-const provider = new ethers.JsonRpcProvider(ethereumSepoliaRpcUrl);
+const provider = new ethers.JsonRpcProvider(rpcUrl);
 
 // Define the enum for message execution states similar to what is used in the OffRamp contract (imported from Internal library)
 enum MessageExecutionState {
@@ -64,7 +72,7 @@ async function findExecutionStateChangeByMessageId() {
     const latestBlock = await provider.getBlockNumber();
 
     const logs = await provider.getLogs({
-        address: networkConfig.sepolia.ccipOfframpAddress,
+        address: networkConfig.avalancheFuji.ccipOfframpAddress,
         fromBlock: latestBlock - 499, // Using a range of 500 blocks considering the RPC limits
         toBlock: latestBlock,
         topics: [eventTopic],
