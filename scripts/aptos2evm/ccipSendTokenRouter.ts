@@ -24,11 +24,21 @@ const argv = yargs(hideBin(process.argv))
         networkConfig.aptos.destChains.ethereumSepolia,
         networkConfig.aptos.destChains.avalancheFuji
     ]
+  }).option('amount', {
+    type: 'number',
+    description: 'Amount of token to send',
+    demandOption: true,
   })
   .parseSync();
 
+// Function to parse amount to U64 with decimals
+function parseAmountToU64Decimals(amount: number | string, decimals: number = 8): bigint {
+  const value = typeof amount === 'string' ? parseFloat(amount) : amount;
+  return BigInt(Math.round(value * 10 ** decimals));
+}
+
 // Specify which network to connect to via AptosConfig
-async function sendTokenFromAptosToEvm() {
+async function sendTokenFromAptosToEvm(tokenAmount: number) {
     // Set up the account with the private key
     const privateKeyHex = process.env.PRIVATE_KEY_HEX;
     if (!privateKeyHex) {
@@ -70,7 +80,7 @@ async function sendTokenFromAptosToEvm() {
     // BnM token address, store address and amount to send
     // TODO: move token store to config file. Is the token store address always 0x0?
     const ccipBnMTokenAddr = networkConfig.aptos.ccipBnMTokenAddress;
-    const TOKEN_AMOUNT_TO_SEND = 10000000
+    const TOKEN_AMOUNT_TO_SEND = parseAmountToU64Decimals(tokenAmount, 8); // 8 decimals for BnM token
     const TOKEN_STORE_ADDR = "0x0"
 
     // fee token address and store address
@@ -147,7 +157,7 @@ async function sendTokenFromAptosToEvm() {
         transactionHash: committedTransaction.hash,
     })
 
-    console.log(executed);
+    // console.log(executed);
 
     if(executed.success === false) {
         throw new Error(`Transaction execution failed: ${executed.vm_status}`);
@@ -156,4 +166,4 @@ async function sendTokenFromAptosToEvm() {
     console.log("Transaction submitted successfully. Transaction Hash:", executed.hash);
 }
  
-sendTokenFromAptosToEvm()
+sendTokenFromAptosToEvm(argv.amount);

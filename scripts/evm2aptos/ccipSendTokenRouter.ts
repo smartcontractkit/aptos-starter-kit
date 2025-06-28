@@ -1,7 +1,8 @@
-import { ethers } from "ethers";
+import { ethers, Interface } from "ethers";
 import RouterABI from '../config/abi/Router';
 import ERC20_ABI from '../config/abi/ERC20';
 import OnRamp_1_6_ABI from "../config/abi/OnRamp_1_6";
+import FeeQuoter_1_6_ABI from "../config/abi/FeeQuoter_1_6";
 import { networkConfig } from "../../helper-config";
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
@@ -18,7 +19,8 @@ const argv = yargs(hideBin(process.argv))
             networkConfig.aptos.feeTokenNameLink,
             networkConfig.aptos.feeTokenNameNative
         ],
-    }).option("sourceChain", {
+    })
+    .option("sourceChain", {
         type: 'string',
         description: 'Specify the source chain from where the token will be sent',
         demandOption: true,
@@ -26,6 +28,11 @@ const argv = yargs(hideBin(process.argv))
             networkConfig.sepolia.networkName,
             networkConfig.avalancheFuji.networkName
         ]
+    })
+    .option('amount', {
+        type: 'number',
+        description: 'Specify the amount of token to send',
+        demandOption: true,
     })
     .parseSync();
 
@@ -217,6 +224,13 @@ async function transferTokenPayNative(wallet: ethers.Wallet, ccipRouterContract:
         await extractCCIPMessageId(ccipOnRampContract, receipt);
     } catch (error) {
         console.error(error);
+
+        handleError([
+            { name: "CCIPRouterInterface", iface: ccipRouterContract.interface },
+            { name: "CCIPOnRampInterface", iface: ccipOnRampContract.interface },
+            { name: "ERC20Interface", iface: new Interface(ERC20_ABI) },
+            { name: "FeeQuoterInterface", iface: new Interface(FeeQuoter_1_6_ABI) }
+        ], error);
     }
 
 }
@@ -307,5 +321,61 @@ async function sendTokenFromEvmToAptos(tokenAmount: number) {
     }
 }
 
-sendTokenFromEvmToAptos(0.001)
 
+async function handleError(
+    interfaces: { name: string; iface: Interface }[],
+    err: any
+) {
+    const data = err.data ?? err.error?.data;
+
+    if (!data || typeof data !== "string" || !data.startsWith("0x")) {
+        console.error("No valid revert data.");
+        return;
+    }
+
+    const selector = data.slice(0, 10);
+
+    if (selector === "0x08c379a0") {
+        // Error(string)
+        try {
+            const fallbackInterface = interfaces[0].iface; // Pick any to decode standard error
+            const reason = fallbackInterface.decodeErrorResult("Error(string)", data);
+            console.log("Require/Revert with string:", reason[0]);
+        } catch {
+            console.log("Failed to decode standard error.");
+        }
+    } else if (selector === "0x4e487b71") {
+        // Panic(uint256)
+        const code = parseInt(data.slice(10, 74), 16);
+        console.log("Panic with code:", code);
+    } else {
+        // Try parsing with each interface
+        let matched = false;
+        for (const { name, iface } of interfaces) {
+            try {
+                const decoded = iface.parseError(data);
+                // console.log(`Custom Error matched in interface: ${name}`);
+                console.log("Custom Error:", decoded!.name);
+
+                if (decoded!.args.length > 0) {
+                    const namedArgs: { [key: string]: any } = {};
+                    decoded!.fragment.inputs.forEach((input, index) => {
+                        namedArgs[input.name] = decoded!.args[index];
+                    });
+                    console.log({ args: namedArgs });
+                }
+
+                matched = true;
+                break;
+            } catch {
+                continue;
+            }
+        }
+
+        if (!matched) {
+            console.log("Unknown error format or not found in any interface.");
+        }
+    }
+}
+
+sendTokenFromEvmToAptos(argv.amount);

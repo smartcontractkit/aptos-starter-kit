@@ -16,30 +16,36 @@ const argv = yargs(hideBin(process.argv))
 
 
 async function getModuleEvents() {
-    // get message Id from user input
-    let msgId = argv.msgId;
-    if (msgId.length !== 66 || !msgId.startsWith("0x")) {
-        throw new Error("Format of message id is incorrect.");
-    }
+  // get message Id from user input
+  let msgId = argv.msgId;
+  if (msgId.length !== 66 || !msgId.startsWith("0x")) {
+    throw new Error("Format of message id is incorrect.");
+  }
 
-    const ccipRouterModuleAddr = networkConfig.aptos.ccipObjectAddress
+  const ccipRouterModuleAddr = networkConfig.aptos.ccipObjectAddress
 
   try {
     const events = await aptos.getModuleEventsByEventType({
       eventType: `${ccipRouterModuleAddr}::offramp::ExecutionStateChanged`,
       options: {
-        limit: 100, 
+        limit: 100,
         orderBy: [{ transaction_version: "desc" }]
       },
     });
-    
+
     let selectedEvent = events.filter(event => event.data.message_id == msgId);
-    let state = selectedEvent[0].data.state
-    
-    if(state === 0) {
+    if (!selectedEvent.length) {
+      console.log("No execution state found for the given message ID yet. Please wait for the transaction to be processed.");
+    }
+
+    else {
+      let state = selectedEvent[0].data.state
+
+      if (state === 0) {
         console.log(`Execution state for ccip message ${msgId} is UNTOUCHED`);
-    } else if(state === 2) {
+      } else if (state === 2) {
         console.log(`Execution state for ccip message ${msgId} is SUCCESS`);
+      }
     }
   } catch (error) {
     console.error("Error fetching module events:", error);
