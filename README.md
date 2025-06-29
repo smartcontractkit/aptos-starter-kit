@@ -75,7 +75,7 @@ By running commands, you send 0.1 amount of BnM tokens from aptos testnet to ava
 
 2. Check the CCIP message status on EVM chain (Take AVAX Fuji as an exmaple)
 
-Set the `ETHEREUM_AVALANCHE_RPC_URL` in `.env` before check the status on Avalanche Fuji. 
+Set the `AVALANCHE_FUJI_RPC_URL` in `.env` before check the status on Avalanche Fuji. 
 
 Run the command with transaction hash returned by last step:
 ```shell

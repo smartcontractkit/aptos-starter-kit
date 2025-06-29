@@ -7,7 +7,7 @@ import { networkConfig } from "../../helper-config";
 dotenv.config();
 
 // Avalanche Fuji config
-const FUJI_RPC_URL = process.env.ETHEREUM_AVALANCHE_RPC_URL
+const FUJI_RPC_URL = process.env.AVALANCHE_FUJI_RPC_URL
 const PRIVATE_KEY = process.env.PRIVATE_KEY
 
 // load the contract ABI and bytecode
@@ -18,7 +18,7 @@ const BYTECODE = contractData.bytecode;
 async function deployReceiverOnEvm() {
   try {
     if (!FUJI_RPC_URL || !PRIVATE_KEY) {
-        throw new Error("please set ETHEREUM_AVALANCHE_RPC_URL and PRIVATE_KEY in .env")
+        throw new Error("please set AVALANCHE_FUJI_RPC_URL and PRIVATE_KEY in .env")
     }
     // set up provider and wallet
     const provider = new ethers.JsonRpcProvider(FUJI_RPC_URL);
