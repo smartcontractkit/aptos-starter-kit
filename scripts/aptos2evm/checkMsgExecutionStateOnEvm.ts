@@ -29,7 +29,7 @@ let destChainRpcUrl: string | undefined;
 if (argv.destChain === networkConfig.sepolia.networkName) {
     destChainRpcUrl = process.env.ETHEREUM_SEPOLIA_RPC_URL;
 } else if (argv.destChain === networkConfig.avalancheFuji.networkName) {
-    destChainRpcUrl = process.env.AVALANCHE_FUJI_RPC_URL;
+    destChainRpcUrl = process.env.ETHEREUM_AVALANCHE_RPC_URL;
 } else {
     throw new Error("Invalid destination chain specified. Please specify --destChain sepolia or --destChain fuji.");    
 }

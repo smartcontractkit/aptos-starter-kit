@@ -73,13 +73,13 @@ npx ts-node scripts/ccipSendTokenRouter.ts --feeToken native --destChain fuji --
 ``` 
 By running commands, you send 0.1 amount of BnM tokens from aptos testnet to avalanche fuji, so please make sure you have BnM and fee tokens in your account before running this command.
 
-2. Check the CCIP message status on Sepolia
+2. Check the CCIP message status on EVM chain (Take AVAX Fuji as an exmaple)
 
 Set the `ETHEREUM_AVALANCHE_RPC_URL` in `.env` before check the status on Avalanche Fuji. 
 
 Run the command with transaction hash returned by last step:
 ```shell
-npx ts-node scripts/checkMsgExecutionStateOnSepolia.ts --txHash <Your Transaction Hash from last step> --destChain fuji
+npx ts-node scripts/checkMsgExecutionStateOnEvm.ts --txHash <Your Tx Hash from last step> --destChain fuji
 ```
 If you see the message below, you might need to wait more time for CCIP to execute your message on destination chain. Or you wait for too long time that the execution is beyond the latest 500 blocks in destination chain. 
 ```shell
@@ -104,7 +104,7 @@ npx ts-node scripts/aptos2evm/ccipSendMsgRouter.ts --feeToken native --destChain
 ```
 check status of CCIP message on evm chains
 ```shell
-npx ts-node scripts/aptos2evm/checkMsgExecutionStateOnSepolia.ts --txHash <your tx hash from last step> --destChain fuji
+npx ts-node scripts/aptos2evm/checkMsgExecutionStateOnEvm.ts --txHash <your tx hash from last step> --destChain fuji
 ```
 
 4. Send an token and arbitrary data from Aptos testnet to Avalanche Fuji by calling Aptos CCIP router module.
@@ -119,10 +119,10 @@ npx ts-node scripts/aptos2evm/ccipSendMsgAndTokenRouter.ts --feeToken native --d
 ```
 check status of CCIP message on evm chains
 ```shell
-npx ts-node scripts/aptos2evm/checkMsgExecutionStateOnSepolia.ts --txHash <your tx hash from last step> --destChain fuji
+npx ts-node scripts/aptos2evm/checkMsgExecutionStateOnEvm.ts --txHash <your tx hash from last step> --destChain fuji
 ```
 
-5. Send tokens from Aptos testnet to Ethereum Sepolia with CCIP sender with ccip sender module. 
+5. Send tokens from Aptos testnet to EVM chain with CCIP sender with ccip sender module. 
 ```
 npx ts-node scripts/ccipSendToken.ts --feeToken link
 ``` 
@@ -133,20 +133,20 @@ npx ts-node scripts/ccipSendToken.ts --feeToken native
 Please make sure you have BnM and fee tokens in your account before running this command.
 
 
-## Use CCIP to send token from Ethereum Sepolia to Aptos testnet
-1. Send tokens from Ethereum Sepolia to by directly calling router contract
+## Use CCIP to send token from EVM to Aptos testnet
+1. Send tokens from EVM chain to by directly calling router contract
 
-Set the `PRIVATE_KEY` and `APTOS_RECEIVER` in `.env`. `PRIVATE_KEY` is your EVM private key. `APTOS_RECEIVER` is the account address to receive the tokens from eth sepolia. 
+Set the `PRIVATE_KEY` and `APTOS_RECEIVER` in `.env`. `PRIVATE_KEY` is your EVM private key. `APTOS_RECEIVER` is the account address to receive the tokens from EVM chains. 
 
-Run command to send ccip message paying sepoliaETH
+Run command to send ccip message paying native token as fee
 ```
-npx ts-node scripts/sepolia-aptos/transferTokenPayNative.ts
+npx ts-node scripts/evm2aptos/transferTokenPayNative.ts
 ```
 2. Check the status of CCIP message on Aptos testnet
 
 Run command to check the event
 ```
-npx ts-node scripts/sepolia-aptos/checkExecutionStateOnAptos.ts --msgId <your ccip message id>
+npx ts-node scripts/evm2aptos/checkExecutionStateOnAptos.ts --msgId <your ccip message id>
 ```
 you will see `Execution state for ccip message <your ccip message id> is SUCCESS` if the message is executed successfully on aptos. 
 run 
