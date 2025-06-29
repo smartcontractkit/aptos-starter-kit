@@ -105,7 +105,7 @@ async function sendTokenFromAptosToEvm(tokenAmount: number) {
     }
 
     // get extra args for the transaction
-    const extraArgs = encodeGenericExtraArgsV2(100000n, true);
+    const extraArgs = encodeGenericExtraArgsV2(0n, true);
 
     // Setup the client
     const config = new AptosConfig({ network: Network.TESTNET });

@@ -29,7 +29,7 @@ let destChainRpcUrl: string | undefined;
 if (argv.destChain === networkConfig.sepolia.networkName) {
     destChainRpcUrl = process.env.ETHEREUM_SEPOLIA_RPC_URL;
 } else if (argv.destChain === networkConfig.avalancheFuji.networkName) {
-    destChainRpcUrl = process.env.ETHEREUM_AVALANCHE_RPC_URL;
+    destChainRpcUrl = process.env.AVALANCHE_FUJI_RPC_URL;
 } else {
     throw new Error("Invalid destination chain specified. Please specify --destChain sepolia or --destChain fuji.");    
 }
@@ -83,37 +83,46 @@ async function findExecutionStateChangeByMessageId() {
         topics: [eventTopic],
     });
 
-    if (logs.length === 0) {
-        console.warn("No messageId found in within the last 500 blocks");
+     if (logs.length === 0) {
+        console.warn("No ExecutionStateChanged event found in within the last 500 blocks");
     }
+    else {
 
-    for (const log of logs.reverse()) {
-        try {
-            const parsed = iface.parseLog(log);
+        let messageIdFound = false;
 
-            const messageId = parsed?.args.messageId as string;
+        for (const log of logs.reverse()) {
+            try {
+                const parsed = iface.parseLog(log);
 
-            if (messageId.toLowerCase() === targetMessageId.toLowerCase()) {
-                // Optional: verify it's an `execute()` call
-                const tx = await provider.getTransaction(log.transactionHash);
-                const executeSighash = iface.getFunction("execute")!.selector;
+                const messageId = parsed?.args.messageId as string;
 
-                if (tx?.data.startsWith(executeSighash)) {
+                if (messageId.toLowerCase() === targetMessageId.toLowerCase()) {
+                    // Optional: verify it's an `execute()` call
+                    const tx = await provider.getTransaction(log.transactionHash);
+                    const executeSighash = iface.getFunction("execute")!.selector;
 
-                    const stateValue = parsed?.args.state;
-                    // Cast to enum
-                    const executionState = MessageExecutionState[stateValue as number];
+                    if (tx?.data.startsWith(executeSighash)) {
 
-                    console.log("Message Execution State:", executionState); // e.g., "SUCCESS"
+                        const stateValue = parsed?.args.state;
+                        // Cast to enum
+                        const executionState = MessageExecutionState[stateValue as number];
+
+                        console.log("Message Execution State:", executionState); // e.g., "SUCCESS"
+
+                        messageIdFound = true;
+
+                        break; // Exit loop after finding the first match
+                    }
                 }
-            }
-            else {
-                console.warn(`Message ID ${messageId} does not match the target ${targetMessageId}`);
-            }
 
-        } catch (err) {
-            console.error("Error parsing log:", err);
-            continue;
+            } catch (err) {
+                console.error("Error parsing log:", err);
+                continue;
+            }
+        }
+
+        if (!messageIdFound) {
+            console.warn("No matching messageId found in within the last 500 blocks");
         }
     }
 }
