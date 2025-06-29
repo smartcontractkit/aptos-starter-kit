@@ -157,8 +157,6 @@ async function sendTokenFromAptosToEvm(tokenAmount: number) {
         transactionHash: committedTransaction.hash,
     })
 
-    // console.log(executed);
-
     if(executed.success === false) {
         throw new Error(`Transaction execution failed: ${executed.vm_status}`);
     }

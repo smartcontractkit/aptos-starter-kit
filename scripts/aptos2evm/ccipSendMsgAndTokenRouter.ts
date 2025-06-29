@@ -1,9 +1,9 @@
-import { Account, Aptos, AptosConfig, Ed25519PrivateKey, Network, MoveVector, Hex, AccountAddress, U64 } from "@aptos-labs/ts-sdk";
+import { Account, Aptos, AptosConfig, Ed25519PrivateKey, Network, MoveVector, Hex, MoveString } from "@aptos-labs/ts-sdk";
 import  * as dotenv from 'dotenv';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { networkConfig } from "../../helper-config";
-import { encodeGenericExtraArgsV2 } from "./utils";
+import { encodeGenericExtraArgsV2, parseAmountToU64Decimals } from "./utils";
 import { ethers } from "ethers";
 
 dotenv.config();
@@ -25,12 +25,16 @@ const argv = yargs(hideBin(process.argv))
         networkConfig.aptos.destChains.ethereumSepolia,
         networkConfig.aptos.destChains.avalancheFuji
     ]
+  }).option('amount', {
+    type: 'number',
+    description: 'Amount of token to send',
+    demandOption: true,
   })
   .parseSync();
 
 
 // Specify which network to connect to via AptosConfig
-async function sendMessageFromAptosToEvm() {
+async function sendMsgAndTokenFromAptosToEvm(tokenAmount: number) {
     // Set up the account with the private key
     const privateKeyHex = process.env.PRIVATE_KEY_HEX;
     if (!privateKeyHex) {
@@ -43,7 +47,10 @@ async function sendMessageFromAptosToEvm() {
     const ccipRouterModuleAddr = networkConfig.aptos.ccipObjectAddress
     const ccipRouterModuleName = networkConfig.aptos.ccipRouterModuleName
     const SENDER_ENTRY_FUNC_NAME = "ccip_send"
-    
+
+    // Prepare the parameters for entry function
+    // Chain selector
+    // TODO: make this dynamic based on user's input
     // Chain selector
     let destChainSelector: string | undefined;
     if(argv.destChain === networkConfig.aptos.destChains.ethereumSepolia) {
@@ -71,7 +78,16 @@ async function sendMessageFromAptosToEvm() {
     const abiCoder = new ethers.AbiCoder();
     const abiEncoded = abiCoder.encode(["string"], ["hello from aptos"]);
     const abiEncodedBytes = ethers.getBytes(abiEncoded);
-    const moveVectorU8 = MoveVector.U8(abiEncodedBytes);
+    const dataInVecU8 = MoveVector.U8(abiEncodedBytes);
+
+    // BnM token address, store address and amount to send
+    // TODO: move token store to config file. Is the token store address always 0x0?
+    const ccipBnMTokenAddr = networkConfig.aptos.ccipBnMTokenAddress;
+    const TOKEN_AMOUNT_TO_SEND = parseAmountToU64Decimals(tokenAmount, 8); // 8 decimals for BnM token
+    const TOKEN_STORE_ADDR = "0x0"
+
+    // set the message to be sent
+    const messageUint8Array = new TextEncoder().encode("hello");
 
     // fee token address and store address
     // fee token is decided by user input
@@ -93,13 +109,12 @@ async function sendMessageFromAptosToEvm() {
     if (!feeTokenStore) {
         throw new Error("Please set the environment variables, FEE_TOKEN_STORE.");
     }
-
+    
     // Setup the client
     const config = new AptosConfig({ network: Network.TESTNET });
     const aptos = new Aptos(config);
 
-    const emptyAddressVec = new MoveVector<AccountAddress>([])
-    const emptyU64Vec = new MoveVector<U64>([])
+    // extraArgs
     const extraArgs = encodeGenericExtraArgsV2(300000n, true);
 
     // construct the transaction to send a CCIP message
@@ -110,10 +125,10 @@ async function sendMessageFromAptosToEvm() {
             functionArguments: [
                 destChainSelector,
                 MoveVector.U8(Hex.hexInputToUint8Array(paddedReceiverArray)),
-                moveVectorU8,
-                emptyAddressVec, //token address
-                emptyU64Vec, //token amount 
-                emptyAddressVec, //token store address
+                dataInVecU8,
+                [ccipBnMTokenAddr],
+                MoveVector.U64([TOKEN_AMOUNT_TO_SEND]),
+                [TOKEN_STORE_ADDR],
                 feeToken,
                 feeTokenStore,
                 extraArgs
@@ -155,4 +170,4 @@ async function sendMessageFromAptosToEvm() {
     console.log("Transaction submitted successfully. Transaction Hash:", executed.hash);
 }
  
-sendMessageFromAptosToEvm()
+sendMsgAndTokenFromAptosToEvm(argv.amount)

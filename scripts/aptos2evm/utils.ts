@@ -20,6 +20,12 @@ export function encodeGenericExtraArgsV2(gasLimit: bigint, allowOutOfOrderExecut
     return new Uint8Array(extraArgs);
 }
 
+// Function to parse amount to U64 with decimals
+export function parseAmountToU64Decimals(amount: number | string, decimals: number = 8): bigint {
+  const value = typeof amount === 'string' ? parseFloat(amount) : amount;
+  return BigInt(Math.round(value * 10 ** decimals));
+}
+
 // Helper function to convert BigInt to bytes
 function bigIntToBytes(value: bigint): number[] {
     // Assuming little-endian encoding for u256 (32 bytes)
