@@ -1,5 +1,3 @@
-import { e } from "@aptos-labs/ts-sdk/dist/common/accountAddress-AL8HRxQC";
-
 export const networkConfig = {
     aptos: {
         chainSelector: "743186221051783445",
@@ -8,8 +6,10 @@ export const networkConfig = {
         ccipOfframpModuleName: "offramp",
         ccipOnrampModuleName: "onramp",
         ccipBnMTokenAddress: "0x9fb6e529e89805611769c76f7d5b6bfc557f04ec9ec69156bdb490e3403246b8",
+        ccipBnMFaucetAddress: "0x68c7af48bfea9e459bd6b6f7240d6764750313a8639dc58c82f88806f559b764",
         feeTokenNameLink: "link",
         linkTokenAddress: "0x8873d0d9aa0e1d7bf7a42de620906d51f535314c72f27032bcaaf5519a22fec9",
+        linkFaucetAddress: "0xa15307fbc421fc3ede3a74fb3bf2fd7f6b30eae731470a70e763a5b76475a0b6",
         feeTokenNameNative: "native",
         nativeTokenAddress: "0xa",
         feeTokenStoreAddress: "0x0",
