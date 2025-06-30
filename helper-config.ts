@@ -1,3 +1,5 @@
+import { e } from "@aptos-labs/ts-sdk/dist/common/accountAddress-AL8HRxQC";
+
 export const networkConfig = {
     aptos: {
         chainSelector: "743186221051783445",
@@ -27,6 +29,7 @@ export const networkConfig = {
         ccipOnrampAddress: "0x48B2e5D487Cb85a7586FCdbDF9cC4E8c7391ED1B",
         ccipBnMTokenAddress: "0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05",
         linkTokenAddress: "0x779877A7B0D9E8603169DdbD7836e478b4624789",
+        explorerUrl: "https://sepolia.etherscan.io"
     },
     avalancheFuji: {
         networkName: "fuji",
@@ -36,5 +39,6 @@ export const networkConfig = {
         ccipOnrampAddress: "0x6ebe6c93878586dDF1825134E2144Fb737b54bdd",
         ccipBnMTokenAddress: "0xD21341536c5cF5EB1bcb58f6723cE26e8D8E90e4",
         linkTokenAddress: "0x0b9d5D9136855f6FEc3c0993feE6E9CE8a297846",
+        explorerUrl: "https://testnet.snowtrace.io"
     }
 }

@@ -148,7 +148,7 @@ async function sendTokenFromAptosToEvm(tokenAmount: number) {
     }
 
     const messageId = await fetchEventsByTxHash(executed.hash, aptos);
-    console.log(`Transaction submitted successfully. Please check transaction at https://explorer.aptoslabs.com/txn/${executed.hash}?network=testnet \nMessage Id is ${messageId}`);
+    console.log(`Transaction submitted successfully. Please check the transaction at https://explorer.aptoslabs.com/txn/${executed.hash}?network=testnet \nCCIP Message ID is ${messageId}`);
 }
  
 sendTokenFromAptosToEvm(argv.amount);
