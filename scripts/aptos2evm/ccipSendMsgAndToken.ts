@@ -3,6 +3,9 @@ import  * as dotenv from 'dotenv';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { networkConfig } from "../../helper-config";
+import { encodeGenericExtraArgsV2, parseAmountToU64Decimals } from "./utils";
+import { ethers } from "ethers";
+
 dotenv.config();
 
 const argv = yargs(hideBin(process.argv))
@@ -14,12 +17,24 @@ const argv = yargs(hideBin(process.argv))
         networkConfig.aptos.feeTokenNameLink, 
         networkConfig.aptos.feeTokenNameNative
     ],
+  }).option("destChain", {
+    type: 'string',
+    description: 'Specify the destination chain where the token will be sent',
+    demandOption: true,
+    choices: [
+        networkConfig.aptos.destChains.ethereumSepolia,
+        networkConfig.aptos.destChains.avalancheFuji
+    ]
+  }).option('amount', {
+    type: 'number',
+    description: 'Amount of token to send',
+    demandOption: true,
   })
   .parseSync();
 
 
 // Specify which network to connect to via AptosConfig
-async function sendMsgAndTokenFromAptosToEvm() {
+async function sendMsgAndTokenFromAptosToEvm(tokenAmount: number) {
     // Set up the account with the private key
     const privateKeyHex = process.env.PRIVATE_KEY_HEX;
     if (!privateKeyHex) {
@@ -31,15 +46,22 @@ async function sendMsgAndTokenFromAptosToEvm() {
     // prepare `${moduleAddr}::${ccipSenderModuleName}::${SENDER_ENTRY_FUNC_NAME}`
     const moduleAddr = process.env.STARTER_MODULE_ADDRESS
     if (!moduleAddr) {
-        throw new Error("Please set the STARTER_MODULE_ADDRESS in file .env");
+        throw new Error("Please set the environment variables STARTER_MODULE_ADDRESS");
     }
     const ccipSenderModuleName = networkConfig.aptos.ccipSenderModuleName;
-    const SENDER_ENTRY_FUNC_NAME = "send_message_with_tokens";
+    const SENDER_ENTRY_FUNC_NAME = "send_message_with_tokens"
 
     // Prepare the parameters for entry function
     // Chain selector
-    // TODO: make this dynamic based on user's input
-    const destChainSelector = networkConfig.sepolia.chainSelector
+    let destChainSelector: string | undefined;
+    if(argv.destChain === networkConfig.aptos.destChains.ethereumSepolia) {
+        destChainSelector = networkConfig.sepolia.chainSelector
+    } else if(argv.destChain === networkConfig.aptos.destChains.avalancheFuji) {
+        destChainSelector = networkConfig.avalancheFuji.chainSelector
+    } else {
+        destChainSelector = undefined
+        throw new Error("Invalid destination chain specified. Please specify --destChain sepolia or --destChain fuji.");
+    }
 
     // Fetch the receiver address and pad it to 32 bytes
     const receiver = process.env.RECEIVER
@@ -53,14 +75,17 @@ async function sendMsgAndTokenFromAptosToEvm() {
     const paddedReceiverArray = new Uint8Array(32);
     paddedReceiverArray.set(receiverUint8Array, 12);
 
+    // set the message to be sent
+    const abiCoder = new ethers.AbiCoder();
+    const abiEncoded = abiCoder.encode(["string"], ["hello from aptos"]);
+    const abiEncodedBytes = ethers.getBytes(abiEncoded);
+    const dataInVecU8 = MoveVector.U8(abiEncodedBytes);
+
     // BnM token address, store address and amount to send
     // TODO: move token store to config file. Is the token store address always 0x0?
     const ccipBnMTokenAddr = networkConfig.aptos.ccipBnMTokenAddress;
-    const TOKEN_AMOUNT_TO_SEND = 10000000
+    const TOKEN_AMOUNT_TO_SEND = parseAmountToU64Decimals(tokenAmount, 8); // 8 decimals for BnM token
     const TOKEN_STORE_ADDR = "0x0"
-
-    // set the message to be sent
-    const messageUint8Array = new TextEncoder().encode("hello");
 
     // fee token address and store address
     // fee token is decided by user input
@@ -95,7 +120,7 @@ async function sendMsgAndTokenFromAptosToEvm() {
             functionArguments: [
                 destChainSelector,
                 MoveVector.U8(Hex.hexInputToUint8Array(paddedReceiverArray)),
-                MoveVector.U8(Hex.hexInputToUint8Array(messageUint8Array)),
+                dataInVecU8,
                 [ccipBnMTokenAddr],
                 MoveVector.U64([TOKEN_AMOUNT_TO_SEND]),
                 [TOKEN_STORE_ADDR],
@@ -132,8 +157,6 @@ async function sendMsgAndTokenFromAptosToEvm() {
         transactionHash: committedTransaction.hash,
     })
 
-    console.log(executed);
-
     if(executed.success === false) {
         throw new Error(`Transaction execution failed: ${executed.vm_status}`);
     }
@@ -141,4 +164,4 @@ async function sendMsgAndTokenFromAptosToEvm() {
     console.log("Transaction submitted successfully. Transaction Hash:", executed.hash);
 }
  
-sendMsgAndTokenFromAptosToEvm()
+sendMsgAndTokenFromAptosToEvm(argv.amount)

@@ -50,8 +50,6 @@ async function sendMsgAndTokenFromAptosToEvm(tokenAmount: number) {
 
     // Prepare the parameters for entry function
     // Chain selector
-    // TODO: make this dynamic based on user's input
-    // Chain selector
     let destChainSelector: string | undefined;
     if(argv.destChain === networkConfig.aptos.destChains.ethereumSepolia) {
         destChainSelector = networkConfig.sepolia.chainSelector
@@ -85,9 +83,6 @@ async function sendMsgAndTokenFromAptosToEvm(tokenAmount: number) {
     const ccipBnMTokenAddr = networkConfig.aptos.ccipBnMTokenAddress;
     const TOKEN_AMOUNT_TO_SEND = parseAmountToU64Decimals(tokenAmount, 8); // 8 decimals for BnM token
     const TOKEN_STORE_ADDR = "0x0"
-
-    // set the message to be sent
-    const messageUint8Array = new TextEncoder().encode("hello");
 
     // fee token address and store address
     // fee token is decided by user input

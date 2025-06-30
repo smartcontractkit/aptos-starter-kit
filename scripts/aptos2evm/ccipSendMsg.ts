@@ -1,8 +1,10 @@
-import { Account, Aptos, AptosConfig, Ed25519PrivateKey, Network, MoveVector, Hex, MoveString } from "@aptos-labs/ts-sdk";
+import { Account, Aptos, AptosConfig, Ed25519PrivateKey, Network, MoveVector, Hex, AccountAddress, U64 } from "@aptos-labs/ts-sdk";
 import  * as dotenv from 'dotenv';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { networkConfig } from "../../helper-config";
+import { ethers } from "ethers";
+
 dotenv.config();
 
 const argv = yargs(hideBin(process.argv))
@@ -14,12 +16,20 @@ const argv = yargs(hideBin(process.argv))
         networkConfig.aptos.feeTokenNameLink, 
         networkConfig.aptos.feeTokenNameNative
     ],
+  }).option("destChain", {
+    type: 'string',
+    description: 'Specify the destination chain where the token will be sent',
+    demandOption: true,
+    choices: [
+        networkConfig.aptos.destChains.ethereumSepolia,
+        networkConfig.aptos.destChains.avalancheFuji
+    ]
   })
   .parseSync();
 
 
 // Specify which network to connect to via AptosConfig
-async function sendMessageFromAptosToEvm() {
+async function sendMsgFromAptosToEvm() {
     // Set up the account with the private key
     const privateKeyHex = process.env.PRIVATE_KEY_HEX;
     if (!privateKeyHex) {
@@ -31,15 +41,21 @@ async function sendMessageFromAptosToEvm() {
     // prepare `${moduleAddr}::${ccipSenderModuleName}::${SENDER_ENTRY_FUNC_NAME}`
     const moduleAddr = process.env.STARTER_MODULE_ADDRESS
     if (!moduleAddr) {
-        throw new Error("Please set the STARTER_MODULE_ADDRESS in file .env");
+        throw new Error("Please set the environment variables STARTER_MODULE_ADDRESS");
     }
     const ccipSenderModuleName = networkConfig.aptos.ccipSenderModuleName;
     const SENDER_ENTRY_FUNC_NAME = "send_message";
-
-    // Prepare the parameters for entry function
+    
     // Chain selector
-    // TODO: make this dynamic based on user's input
-    const destChainSelector = networkConfig.sepolia.chainSelector
+    let destChainSelector: string | undefined;
+    if(argv.destChain === networkConfig.aptos.destChains.ethereumSepolia) {
+        destChainSelector = networkConfig.sepolia.chainSelector
+    } else if(argv.destChain === networkConfig.aptos.destChains.avalancheFuji) {
+        destChainSelector = networkConfig.avalancheFuji.chainSelector
+    } else {
+        destChainSelector = undefined
+        throw new Error("Invalid destination chain specified. Please specify --destChain sepolia or --destChain fuji.");
+    }
 
     // Fetch the receiver address and pad it to 32 bytes
     const receiver = process.env.RECEIVER
@@ -54,7 +70,10 @@ async function sendMessageFromAptosToEvm() {
     paddedReceiverArray.set(receiverUint8Array, 12);
 
     // set the message to be sent
-    const messageUint8Array = new TextEncoder().encode("hello");
+    const abiCoder = new ethers.AbiCoder();
+    const abiEncoded = abiCoder.encode(["string"], ["hello from aptos sender"]);
+    const abiEncodedBytes = ethers.getBytes(abiEncoded);
+    const moveVectorU8 = MoveVector.U8(abiEncodedBytes);
 
     // fee token address and store address
     // fee token is decided by user input
@@ -89,9 +108,9 @@ async function sendMessageFromAptosToEvm() {
             functionArguments: [
                 destChainSelector,
                 MoveVector.U8(Hex.hexInputToUint8Array(paddedReceiverArray)),
-                MoveVector.U8(Hex.hexInputToUint8Array(messageUint8Array)),
+                moveVectorU8,
                 feeToken,
-                feeTokenStore
+                feeTokenStore,
             ],
         }
     });
@@ -123,8 +142,6 @@ async function sendMessageFromAptosToEvm() {
         transactionHash: committedTransaction.hash,
     })
 
-    console.log(executed);
-
     if(executed.success === false) {
         throw new Error(`Transaction execution failed: ${executed.vm_status}`);
     }
@@ -132,4 +149,4 @@ async function sendMessageFromAptosToEvm() {
     console.log("Transaction submitted successfully. Transaction Hash:", executed.hash);
 }
  
-sendMessageFromAptosToEvm()
+sendMsgFromAptosToEvm()
