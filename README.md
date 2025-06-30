@@ -121,40 +121,42 @@ npx ts-node scripts/aptos2evm/checkMsgExecutionStateOnEvm.ts --txHash <your tx h
 ```
 
 ### Send tokens through a ccip sender module
-1. Send the BnM tokens from aptos testnet to Avalanche Fuji
-```
+1. Replace the `RECEIVER` in `.env` with an EOA address on Avalanche
+2. Send the BnM tokens from aptos testnet to Avalanche Fuji
+```shell
 npx ts-node scripts/aptos2evm/ccipSendToken.ts --feeToken link --destChain Fuji --amount 0.1
 ``` 
 Update the param from `link` to `native` if you want to pay native token (aptos) for CCIP fee. 
-```
+```shell
 npx ts-node scripts/aptos2evm/ccipSendToken.ts --feeToken native --destChain Fuji --amount 0.1
 ``` 
-2. check status of CCIP message on evm chains
+3. check status of CCIP message on evm chains
 ```shell
 npx ts-node scripts/aptos2evm/checkMsgExecutionStateOnEvm.ts --txHash <your tx hash from last step> --destChain fuji
 ```
 
 ### Send arbitraty data through a ccip sender module
-1. Send arbitraty data from aptos testnet to Avalanche Fuji
-```
+1. Replace the `RECEIVER` in `env` with the receiver address deployed in "Send arbitrary data"
+2. Send arbitraty data from aptos testnet to Avalanche Fuji
+```shell
 npx ts-node scripts/aptos2evm/ccipSendMsg.ts --feeToken link --destChain fuji
 ``` 
 Update the param from `link` to `native` if you want to pay native token (aptos) for CCIP fee. 
-```
+```shell
 npx ts-node scripts/aptos2evm/ccipSendMsg.ts --feeToken native --destChain fuji
 ``` 
-2. check status of CCIP message on Avalanche Fuji
+3. check status of CCIP message on Avalanche Fuji
 ```shell
 npx ts-node scripts/aptos2evm/checkMsgExecutionStateOnEvm.ts --txHash <your tx hash from last step> --destChain fuji
 ```
 
 ### Send BnM token and arbitraty data through a ccip sender module
 1. Send the BnM tokens and arbitrary data from aptos testnet to Avalanche Fuji
-```
+```shell
 npx ts-node scripts/aptos2evm/ccipSendMsgAndToken.ts --feeToken link --destChain fuji --amount 0.1
 ``` 
 Update the param from `link` to `native` if you want to pay native token (aptos) for CCIP fee. 
-```
+```shell
 npx ts-node scripts/aptos2evm/ccipSendMsgAndToken.ts --feeToken native --destChain fuji --amount 0.1
 ``` 
 2. check status of CCIP message on Avalanche Fuji

@@ -3,7 +3,7 @@ import  * as dotenv from 'dotenv';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { networkConfig } from "../../helper-config";
-import { encodeGenericExtraArgsV2 } from "./utils";
+import { encodeGenericExtraArgsV2, parseAmountToU64Decimals } from "./utils";
 
 dotenv.config();
 
@@ -30,12 +30,6 @@ const argv = yargs(hideBin(process.argv))
     demandOption: true,
   })
   .parseSync();
-
-// Function to parse amount to U64 with decimals
-function parseAmountToU64Decimals(amount: number | string, decimals: number = 8): bigint {
-  const value = typeof amount === 'string' ? parseFloat(amount) : amount;
-  return BigInt(Math.round(value * 10 ** decimals));
-}
 
 // Specify which network to connect to via AptosConfig
 async function sendTokenFromAptosToEvm(tokenAmount: number) {

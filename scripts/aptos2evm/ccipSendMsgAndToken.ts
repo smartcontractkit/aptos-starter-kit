@@ -3,7 +3,7 @@ import  * as dotenv from 'dotenv';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { networkConfig } from "../../helper-config";
-import { encodeGenericExtraArgsV2, parseAmountToU64Decimals } from "./utils";
+import { parseAmountToU64Decimals } from "./utils";
 import { ethers } from "ethers";
 
 dotenv.config();
