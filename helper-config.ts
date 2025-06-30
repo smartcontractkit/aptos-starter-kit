@@ -10,6 +10,7 @@ export const networkConfig = {
         linkTokenAddress: "0x8873d0d9aa0e1d7bf7a42de620906d51f535314c72f27032bcaaf5519a22fec9",
         feeTokenNameNative: "native",
         nativeTokenAddress: "0xa",
+        feeTokenStoreAddress: "0x0",
         dataFeedDemoModuleName: "price_feed_demo",
         dataFeedId: "0x01a0b4d920000332000000000000000000000000000000000000000000000000",
         ccipSenderModuleName: "ccip_message_sender",

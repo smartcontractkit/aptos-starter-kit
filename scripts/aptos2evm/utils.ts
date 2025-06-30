@@ -1,3 +1,21 @@
+import { Aptos } from "@aptos-labs/ts-sdk";
+
+export async function fetchEventsByTxHash(txHash: string, aptos: Aptos) {
+  let messageId: string;
+  try {
+    const transaction = await aptos.getTransactionByHash({ transactionHash: txHash });
+    if (transaction.type === "user_transaction") {
+      let ccipSendEvent = transaction.events.filter(event => event.type.includes("onramp::CCIPMessageSent"));
+      messageId = ccipSendEvent[0].data.message.header.message_id;
+    } else {
+      throw new Error("No events found or not a user transaction.");
+    }
+  } catch (error) {
+    throw new Error(`Error fetching transaction events: ${error}`);
+  }
+  return messageId
+}
+
 const GENERIC_EXTRA_ARGS_V2_TAG: number[] = [0x18, 0x1d, 0xcf, 0x10];
 
 export function encodeGenericExtraArgsV2(gasLimit: bigint, allowOutOfOrderExecution: boolean): Uint8Array {

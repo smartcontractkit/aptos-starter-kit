@@ -1,10 +1,6 @@
 import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
 
-async function fetchEventsByTxHash() {
-  const config = new AptosConfig({ network: Network.TESTNET });
-  const aptos = new Aptos(config);
-
-  const txHash = "0xfe9bfc8c1382d9783fd6426a80930a003ee36407b25ee53210e3225760559018";
+async function fetchEventsByTxHash(txHash: string, aptos: Aptos) {
 
   let messageId: string;
   try {
@@ -21,5 +17,3 @@ async function fetchEventsByTxHash() {
   }
   let s: string = messageId;
 }
-
-fetchEventsByTxHash();

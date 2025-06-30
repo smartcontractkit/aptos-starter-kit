@@ -3,7 +3,7 @@ import  * as dotenv from 'dotenv';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { networkConfig } from "../../helper-config";
-import { parseAmountToU64Decimals } from "./utils";
+import { parseAmountToU64Decimals, fetchEventsByTxHash } from "./utils";
 import { ethers } from "ethers";
 
 dotenv.config();
@@ -87,25 +87,17 @@ async function sendMsgAndTokenFromAptosToEvm(tokenAmount: number) {
     const TOKEN_AMOUNT_TO_SEND = parseAmountToU64Decimals(tokenAmount, 8); // 8 decimals for BnM token
     const TOKEN_STORE_ADDR = "0x0"
 
-    // fee token address and store address
-    // fee token is decided by user input
-    // TODO: move token store addr to config file, Is the token store address always 0x0?
-    let feeToken: string | undefined;
-    if (argv.feeToken === networkConfig.aptos.feeTokenNameLink) {
-        feeToken = networkConfig.aptos.linkTokenAddress;
-    } else if (argv.feeToken === networkConfig.aptos.feeTokenNameNative) {
-        feeToken = networkConfig.aptos.nativeTokenAddress;
-    } else {
-        feeToken = undefined
-        throw new Error("Invalid fee token specified. Please specify fee token use --feeToken link or --feeToken native.");
-    }
+    // set fee token address as user input
+    let feeToken = argv.feeToken === networkConfig.aptos.feeTokenNameLink 
+        ? networkConfig.aptos.linkTokenAddress
+        : argv.feeToken === networkConfig.aptos.feeTokenNameNative
+        ? networkConfig.aptos.nativeTokenAddress
+        : (() => {
+            throw new Error("Invalid fee token specified. Please specify fee token use --feeToken link or --feeToken native.");
+        })();
+    
     if (!feeToken) {
         throw new Error("Please set the environment variable APTOS_FEE_TOKEN_LINK or APTOS_FEE_TOKEN_NATIVE.");
-    }    
-
-    const feeTokenStore = process.env.FEE_TOKEN_STORE 
-    if (!feeTokenStore) {
-        throw new Error("Please set the environment variables, FEE_TOKEN_STORE.");
     }
     
     // Setup the client
@@ -125,7 +117,7 @@ async function sendMsgAndTokenFromAptosToEvm(tokenAmount: number) {
                 MoveVector.U64([TOKEN_AMOUNT_TO_SEND]),
                 [TOKEN_STORE_ADDR],
                 feeToken,
-                feeTokenStore
+                networkConfig.aptos.feeTokenStoreAddress,
             ],
         }
     });
@@ -161,7 +153,8 @@ async function sendMsgAndTokenFromAptosToEvm(tokenAmount: number) {
         throw new Error(`Transaction execution failed: ${executed.vm_status}`);
     }
 
-    console.log("Transaction submitted successfully. Transaction Hash:", executed.hash);
+    const messageId = await fetchEventsByTxHash(executed.hash, aptos);
+    console.log(`Transaction submitted successfully. Please check transaction at https://explorer.aptoslabs.com/txn/${executed.hash}?network=testnet \nMessage Id is ${messageId}`);
 }
  
 sendMsgAndTokenFromAptosToEvm(argv.amount)
