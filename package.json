@@ -1,0 +1,27 @@
+{
+  "name": "aptos-starter-kit",
+  "version": "1.0.0",
+  "description": "## prerequisites 1. Install [Aptos CLI](https://aptos.dev/en/build/cli)<br> 2. Config an account on Aptos testnet",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.15.24",
+    "@types/yargs": "^17.0.33",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3",
+    "yargs": "^18.0.0"
+  },
+  "dependencies": {
+    "@aptos-labs/ts-sdk": "^2.0.1",
+    "dotenv": "^16.5.0",
+    "ethers": "^6.14.4"
+  }
+}
