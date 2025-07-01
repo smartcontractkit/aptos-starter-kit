@@ -9,7 +9,7 @@ const aptos = new Aptos(config);
 const argv = yargs(hideBin(process.argv))
   .option('msgId', {
     type: 'string',
-    description: 'Specify the ccip message Id',
+    description: 'Specify the CCIP Message Id',
     demandOption: true,
   })
   .parseSync();
@@ -42,9 +42,9 @@ async function getModuleEvents() {
       let state = selectedEvent[0].data.state
 
       if (state === 0) {
-        console.log(`Execution state for ccip message ${msgId} is UNTOUCHED`);
+        console.log(`Execution state for CCIP message ${msgId} is UNTOUCHED`);
       } else if (state === 2) {
-        console.log(`Execution state for ccip message ${msgId} is SUCCESS`);
+        console.log(`Execution state for CCIP message ${msgId} is SUCCESS`);
       }
     }
   } catch (error) {

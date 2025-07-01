@@ -9,9 +9,9 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 const argv = yargs(hideBin(process.argv))
-    .option('txHash', {
+    .option('msgId', {
         type: 'string',
-        description: 'Specify the transaction hash for ccip_send',
+        description: 'Specify the CCIP Message Id',
         demandOption: true,
     }).option("destChain", {
         type: 'string',
@@ -31,7 +31,7 @@ if (argv.destChain === networkConfig.sepolia.networkName) {
 } else if (argv.destChain === networkConfig.avalancheFuji.networkName) {
     destChainRpcUrl = process.env.AVALANCHE_FUJI_RPC_URL;
 } else {
-    throw new Error("Invalid destination chain specified. Please specify --destChain sepolia or --destChain fuji.");    
+    throw new Error("Invalid destination chain specified. Please specify --destChain sepolia or --destChain fuji.");
 }
 
 const provider = new ethers.JsonRpcProvider(destChainRpcUrl);
@@ -45,31 +45,10 @@ enum MessageExecutionState {
 }
 
 async function findExecutionStateChangeByMessageId() {
-    // txHash is from user input
-    let txHash = argv.txHash;
-    if (!txHash || txHash.length !== 66 || !txHash.startsWith("0x")) {
-        throw new Error("Please set aptos transaction hash with --txHash <your transaction hash>");
-    }
-
     // set up the Aptos client
     const aptosConfig = new AptosConfig({ network: Network.TESTNET });
     const aptos = new Aptos(aptosConfig);
 
-    // Fetch the transaction by hash to get the messageId
-    let targetMessageId: string;
-    try {
-        const transaction = await aptos.getTransactionByHash({ transactionHash: txHash });
-        if (transaction.type === "user_transaction") {
-            let ccipSendEvent = transaction.events.filter(event => event.type.includes("onramp::CCIPMessageSent"));
-            targetMessageId = ccipSendEvent[0].data.message.header.message_id;
-        } else {
-            throw new Error("No events found or not a user transaction.");
-        }
-    } catch (error) {
-        throw new Error(`Error fetching transaction events: ${error}`);
-    }
-
-    console.log(`CCIP Message ID to check on ${argv.destChain}:`, targetMessageId);
 
     // check the status on evm based on the messageId
     const iface = new ethers.Interface(OffRamp_1_6_ABI);
@@ -83,7 +62,7 @@ async function findExecutionStateChangeByMessageId() {
         topics: [eventTopic],
     });
 
-     if (logs.length === 0) {
+    if (logs.length === 0) {
         console.warn("No ExecutionStateChanged event found in within the last 500 blocks");
     }
     else {
@@ -96,7 +75,7 @@ async function findExecutionStateChangeByMessageId() {
 
                 const messageId = parsed?.args.messageId as string;
 
-                if (messageId.toLowerCase() === targetMessageId.toLowerCase()) {
+                if (messageId.toLowerCase() === argv.msgId.toLowerCase()) {
                     // Optional: verify it's an `execute()` call
                     const tx = await provider.getTransaction(log.transactionHash);
                     const executeSighash = iface.getFunction("execute")!.selector;
@@ -107,7 +86,7 @@ async function findExecutionStateChangeByMessageId() {
                         // Cast to enum
                         const executionState = MessageExecutionState[stateValue as number];
 
-                        console.log("Message Execution State:", executionState); // e.g., "SUCCESS"
+                        console.log(`Execution state for CCIP message ${argv.msgId} is ${executionState}`); // e.g., "SUCCESS"
 
                         messageIdFound = true;
 

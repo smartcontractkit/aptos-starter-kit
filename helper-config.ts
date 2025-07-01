@@ -1,3 +1,4 @@
+import { e } from "@aptos-labs/ts-sdk/dist/common/accountAddress-AL8HRxQC";
 export const networkConfig = {
     aptos: {
         chainSelector: "0x00",
@@ -27,6 +28,7 @@ export const networkConfig = {
         ccipOnrampAddress: "0x00",
         ccipBnMTokenAddress: "0x00",
         linkTokenAddress: "0x00",
+        explorerUrl: "https://sepolia.etherscan.io",
     },
     avalancheFuji: {
         networkName: "fuji",
@@ -36,5 +38,6 @@ export const networkConfig = {
         ccipOnrampAddress: "0x00",
         ccipBnMTokenAddress: "0x00",
         linkTokenAddress: "0x00",
+        explorerUrl: "https://testnet.snowtrace.io",
     }
 }

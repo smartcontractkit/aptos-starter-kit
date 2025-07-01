@@ -132,7 +132,7 @@ async function extractCCIPMessageId(
     return null;
 }
 
-async function transferTokenPayLink(wallet: ethers.Wallet, ccipRouterContract: ethers.Contract, ccipOnRampContract: ethers.Contract, recipient: string, tokenAddress: string, tokenAmount: bigint, feeTokenAddress: string) {
+async function transferTokenPayLink(wallet: ethers.Wallet, ccipRouterContract: ethers.Contract, ccipOnRampContract: ethers.Contract, recipient: string, tokenAddress: string, tokenAmount: bigint, feeTokenAddress: string, explorerUrl: string) {
 
     try {
 
@@ -172,7 +172,7 @@ async function transferTokenPayLink(wallet: ethers.Wallet, ccipRouterContract: e
         const confirmationsToWait = 3;
         const receipt = await tx.wait(confirmationsToWait);
         console.log(`Transaction confirmed in block ${receipt.blockNumber} after ${confirmationsToWait} confirmations.`);
-        console.log("✅ Transaction successful:", tx.hash);
+        console.log("✅ Transaction successful:", `${explorerUrl}/tx/${tx.hash}`);
         await extractCCIPMessageId(ccipOnRampContract, receipt);
     } catch (error) {
         console.error(error);
@@ -180,7 +180,7 @@ async function transferTokenPayLink(wallet: ethers.Wallet, ccipRouterContract: e
 
 }
 
-async function transferTokenPayNative(wallet: ethers.Wallet, ccipRouterContract: ethers.Contract, ccipOnRampContract: ethers.Contract, recipient: string, tokenAddress: string, tokenAmount: bigint) {
+async function transferTokenPayNative(wallet: ethers.Wallet, ccipRouterContract: ethers.Contract, ccipOnRampContract: ethers.Contract, recipient: string, tokenAddress: string, tokenAmount: bigint, explorerUrl: string) {
 
     try {
 
@@ -220,7 +220,7 @@ async function transferTokenPayNative(wallet: ethers.Wallet, ccipRouterContract:
         const confirmationsToWait = 3;
         const receipt = await tx.wait(confirmationsToWait);
         console.log(`Transaction confirmed in block ${receipt.blockNumber} after ${confirmationsToWait} confirmations.`);
-        console.log("✅ Transaction successful:", tx.hash);
+        console.log("✅ Transaction successful:", `${explorerUrl}/tx/${tx.hash}`);
         await extractCCIPMessageId(ccipOnRampContract, receipt);
     } catch (error) {
         console.error(error);
@@ -247,6 +247,7 @@ async function sendTokenFromEvmToAptos(tokenAmount: number) {
     let sourceChainRpcUrl: string | undefined;
     let tokenAddress: string | undefined;
     let feeTokenAddress: string | undefined;
+    let explorerUrl: string | undefined;
 
     if (argv.sourceChain === networkConfig.sepolia.networkName) {
         sourceChainRpcUrl = process.env.ETHEREUM_SEPOLIA_RPC_URL;
@@ -273,11 +274,13 @@ async function sendTokenFromEvmToAptos(tokenAmount: number) {
 
         const parsedTokenAmount = await parseTokenAmount(tokenAddress, tokenAmount, wallet.provider as ethers.Provider);
 
+        explorerUrl = networkConfig.sepolia.explorerUrl;
+
         if (argv.feeToken === networkConfig.aptos.feeTokenNameLink) {
             feeTokenAddress = networkConfig.sepolia.linkTokenAddress;
-            transferTokenPayLink(wallet, ccipRouterContract, ccipOnRampContract, recipient, tokenAddress, parsedTokenAmount, feeTokenAddress);
+            transferTokenPayLink(wallet, ccipRouterContract, ccipOnRampContract, recipient, tokenAddress, parsedTokenAmount, feeTokenAddress, explorerUrl);
         } else if (argv.feeToken === networkConfig.aptos.feeTokenNameNative) {
-            transferTokenPayNative(wallet, ccipRouterContract, ccipOnRampContract, recipient, tokenAddress, parsedTokenAmount);
+            transferTokenPayNative(wallet, ccipRouterContract, ccipOnRampContract, recipient, tokenAddress, parsedTokenAmount, explorerUrl);
         } else {
             throw new Error("Invalid fee token specified. Please specify fee token use --feeToken link or --feeToken native.");
         }
@@ -307,11 +310,13 @@ async function sendTokenFromEvmToAptos(tokenAmount: number) {
 
         const parsedTokenAmount = await parseTokenAmount(tokenAddress, tokenAmount, wallet.provider as ethers.Provider);
 
+        explorerUrl = networkConfig.avalancheFuji.explorerUrl;
+
         if (argv.feeToken === networkConfig.aptos.feeTokenNameLink) {
             feeTokenAddress = networkConfig.avalancheFuji.linkTokenAddress;
-            transferTokenPayLink(wallet, ccipRouterContract, ccipOnRampContract, recipient, tokenAddress, parsedTokenAmount, feeTokenAddress);
+            transferTokenPayLink(wallet, ccipRouterContract, ccipOnRampContract, recipient, tokenAddress, parsedTokenAmount, feeTokenAddress, explorerUrl);
         } else if (argv.feeToken === networkConfig.aptos.feeTokenNameNative) {
-            transferTokenPayNative(wallet, ccipRouterContract, ccipOnRampContract, recipient, tokenAddress, parsedTokenAmount);
+            transferTokenPayNative(wallet, ccipRouterContract, ccipOnRampContract, recipient, tokenAddress, parsedTokenAmount, explorerUrl);
         }
         else {
             throw new Error("Invalid fee token specified. Please specify fee token use --feeToken link or --feeToken native.");
