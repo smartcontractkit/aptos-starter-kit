@@ -1,5 +1,5 @@
 {
-  "name": "aptos-starter-kit",
+  "name": "@chainlink/aptos-starter-kit",
   "version": "1.0.0",
   "description": "## prerequisites 1. Install [Aptos CLI](https://aptos.dev/en/build/cli)<br> 2. Config an account on Aptos testnet",
   "main": "index.js",
