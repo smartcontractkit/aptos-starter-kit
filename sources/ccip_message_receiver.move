@@ -33,7 +33,6 @@ module receiver::ccip_message_receiver {
     #[event]
     enum ReceiverEvent has store, drop {
         Message(ReceivedMessage),
-        Tokens(ReceivedTokens),
         Forwarded(ForwardedTokensToFinalRecipient),
     }
 
@@ -51,12 +50,6 @@ module receiver::ccip_message_receiver {
     /// A resource to hold the final recipient of tokens forwarded by the receiver.
     struct TokensForwardedTo has key {
         final_recipient: address,
-    }
-
-    /// A resource to hold the tokens and their amounts that are received by the receiver.
-    struct Tokens has key {
-        token_addresses: vector<address>,
-        token_amounts: vector<u64>,
     }
 
     const E_UNAUTHORIZED: u64 = 1;
