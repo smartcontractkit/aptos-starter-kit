@@ -19,12 +19,6 @@ module receiver::ccip_message_receiver {
     }
 
     #[event]
-    struct ReceivedTokens has store, drop {
-        token_addresses: vector<address>,
-        token_amounts: vector<u64>,
-    }
-
-    #[event]
     struct ForwardedTokensToFinalRecipient has store, drop {
         final_recipient: address,
     }
