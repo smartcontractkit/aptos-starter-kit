@@ -212,12 +212,12 @@ To obtain CCIP-BnM tokens on Avalanche Fuji, you can use the [Mint tokens in the
 #### Transfer tokens from Avalanche Fuji to Aptos Testnet
 
 ```shell
-npx ts-node scripts/aptos2evm/ccipSendTokenRouter.ts --feeToken link --sourceChain fuji --amount 0.1 --aptosReceiver <your aptos account/resource account address>
+npx ts-node scripts/evm2aptos/ccipSendTokenRouter.ts --feeToken link --sourceChain fuji --amount 0.1 --aptosReceiver <your aptos account/resource account address>
 ``` 
 
 Update the param from `link` to `native` if you want to pay native token (APT) for CCIP fee. 
 ```shell
-npx ts-node scripts/aptos2evm/ccipSendTokenRouter.ts --feeToken native --sourceChain fuji --amount 0.1 --aptosReceiver <your aptos account/resource account address>
+npx ts-node scripts/evm2aptos/ccipSendTokenRouter.ts --feeToken native --sourceChain fuji --amount 0.1 --aptosReceiver <your aptos account/resource account address>
 ``` 
 
 ### Check the CCIP message status on Aptos Testnet

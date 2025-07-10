@@ -19,50 +19,24 @@ module receiver::ccip_message_receiver {
     }
 
     #[event]
-    struct ForwardedTokensToFinalRecipient has store, drop {
+    struct ForwardedTokens has store, drop {
         final_recipient: address,
-    }
-
-    // An enum to wrap all possible events
-    #[event]
-    enum ReceiverEvent has store, drop {
-        Message(ReceivedMessage),
-        Forwarded(ForwardedTokensToFinalRecipient),
     }
 
     struct CCIPReceiverState has key {
         signer_cap: account::SignerCapability,
-        // The handle is now generic over the enum type
-        handle: event::EventHandle<ReceiverEvent>,
+        received_message_handle: event::EventHandle<ReceivedMessage>,
+        forwarded_tokens_handle: event::EventHandle<ForwardedTokens>,
     }
 
-    /// A resource to hold a message received by the receiver.
-    struct Message has key {
-        message: String,
-    }
-
-    /// A resource to hold the final recipient of tokens forwarded by the receiver.
-    struct TokensForwardedTo has key {
-        final_recipient: address,
-    }
-
-    const E_UNAUTHORIZED: u64 = 1;
-    const E_INVALID_TOKEN_ADDRESS: u64 = 2;
-    const E_NO_TOKENS_AVAILABLE_TO_WITHDRAW: u64 = 3;
+    const E_RESOURCE_NOT_FOUND_ON_ACCOUNT: u64 = 1;
+    const E_UNAUTHORIZED: u64 = 2;
+    const E_INVALID_TOKEN_ADDRESS: u64 = 3;
+    const E_NO_TOKENS_AVAILABLE_TO_WITHDRAW: u64 = 4;
 
     #[view]
     public fun type_and_version(): String {
         string::utf8(b"CCIPReceiver 1.6.0")
-    }
-
-    #[view]
-    public fun latest_message(): String acquires Message {
-        if (exists<Message>(@receiver)) {
-            let state = borrow_global<Message>(@receiver);
-            state.message
-        } else {
-            string::utf8(b"No message string received yet!")
-        }
     }
 
     const MODULE_NAME: vector<u8> = b"ccip_message_receiver";
@@ -70,11 +44,19 @@ module receiver::ccip_message_receiver {
     fun init_module(publisher: &signer) {
         let signer_cap =
             resource_account::retrieve_resource_account_cap(publisher, @deployer);
-        let handle = account::new_event_handle(publisher);
 
+        // Create a unique handle for each event type
+        let received_message_handle = account::new_event_handle<ReceivedMessage>(publisher);
+        let forwarded_tokens_handle = account::new_event_handle<ForwardedTokens>(publisher);
+
+        // Move all state into the single resource struct
         move_to(
             publisher,
-            CCIPReceiverState { signer_cap, handle }
+            CCIPReceiverState {
+                signer_cap,
+                received_message_handle,
+                forwarded_tokens_handle,
+            }
         );
 
         receiver_registry::register_receiver(publisher, MODULE_NAME, CCIPReceiverProof {});
@@ -121,20 +103,16 @@ module receiver::ccip_message_receiver {
                 );
             };
 
-            move_to(&state_signer, TokensForwardedTo { final_recipient });
-
-            event::emit(ForwardedTokensToFinalRecipient { final_recipient });
-            event::emit_event(&mut state.handle, ReceiverEvent::Forwarded(ForwardedTokensToFinalRecipient { final_recipient }));
+            event::emit(ForwardedTokens { final_recipient });
+            event::emit_event(&mut state.forwarded_tokens_handle, ForwardedTokens { final_recipient });
 
         } else if (data.length() != 0) {
             
             // Convert the vector<u8> to a string
             let message = string::utf8(data);
 
-            move_to(&state_signer, Message { message });
-
             event::emit( ReceivedMessage { message });
-            event::emit_event(&mut state.handle, ReceiverEvent::Message( ReceivedMessage { message }));
+            event::emit_event(&mut state.received_message_handle, ReceivedMessage { message });
 
         };
 
@@ -152,7 +130,8 @@ module receiver::ccip_message_receiver {
         token_address: address,
     ) acquires CCIPReceiverState {
 
-        assert!(exists<CCIPReceiverState>(@receiver) && signer::address_of(sender) == @deployer, E_UNAUTHORIZED);
+        assert!(exists<CCIPReceiverState>(@receiver), E_RESOURCE_NOT_FOUND_ON_ACCOUNT);
+        assert!(signer::address_of(sender) == @deployer, E_UNAUTHORIZED);
 
         let state = borrow_global_mut<CCIPReceiverState>(@receiver);
         let state_signer = account::create_signer_with_capability(&state.signer_cap);
