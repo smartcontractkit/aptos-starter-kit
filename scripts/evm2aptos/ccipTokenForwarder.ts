@@ -1,4 +1,4 @@
-import { ethers, Interface } from "ethers";
+import { ethers, Interface, hexlify, toUtf8Bytes } from "ethers";
 import RouterABI from '../config/abi/Router';
 import ERC20_ABI from '../config/abi/ERC20';
 import OnRamp_1_6_ABI from "../config/abi/OnRamp_1_6";
@@ -29,9 +29,14 @@ const argv = yargs(hideBin(process.argv))
             networkConfig.avalancheFuji.networkName
         ]
     })
+    .option('aptosAccount', {
+        type: 'string',
+        description: 'Specify the Aptos account address to forward the token to',
+        demandOption: true
+    })
     .option('amount', {
         type: 'number',
-        description: 'Specify the amount of token to send',
+        description: 'Specify the amount of token to forward',
         demandOption: true,
     })
     .option('aptosReceiver', {
@@ -137,17 +142,17 @@ async function extractCCIPMessageId(
     return null;
 }
 
-async function transferTokenPayLink(wallet: ethers.Wallet, ccipRouterContract: ethers.Contract, ccipOnRampContract: ethers.Contract, recipient: string, tokenAddress: string, tokenAmount: bigint, feeTokenAddress: string, explorerUrl: string) {
+async function transferTokenPayLink(wallet: ethers.Wallet, ccipRouterContract: ethers.Contract, ccipOnRampContract: ethers.Contract, recipient: string, aptosAccountAddress: string, tokenAddress: string, tokenAmount: bigint, feeTokenAddress: string, explorerUrl: string) {
 
     try {
 
         const ccipMessage = buildCCIPMessage(
             recipient,
-            "0x", // No message data
+            aptosAccountAddress, // Aptos account address (passed as data) to forward the token to
             tokenAddress,
             tokenAmount,
             feeTokenAddress,
-            encodeExtraArgsV2(0n, true) // Gas limit set to 0 (because transferring to EOA), OoO (Out of Order) execution enabled
+            encodeExtraArgsV2(100000n, true) // Gas limit set to 200000. This is a reasonable default for most messages, OoO (Out of Order) execution enabled
         );
 
         const baseFee: bigint = await ccipRouterContract.getFee(networkConfig.aptos.chainSelector, ccipMessage);
@@ -185,17 +190,17 @@ async function transferTokenPayLink(wallet: ethers.Wallet, ccipRouterContract: e
 
 }
 
-async function transferTokenPayNative(wallet: ethers.Wallet, ccipRouterContract: ethers.Contract, ccipOnRampContract: ethers.Contract, recipient: string, tokenAddress: string, tokenAmount: bigint, explorerUrl: string) {
+async function transferTokenPayNative(wallet: ethers.Wallet, ccipRouterContract: ethers.Contract, ccipOnRampContract: ethers.Contract, recipient: string, aptosAccountAddress: string, tokenAddress: string, tokenAmount: bigint,  explorerUrl: string) {
 
     try {
 
         const ccipMessage = buildCCIPMessage(
             recipient,
-            "0x", // No message data
+            aptosAccountAddress, // Aptos account address (passed as data) to forward the token to
             tokenAddress,
             tokenAmount,
             ethers.ZeroAddress, // Fee token is set to zero address (in case of using native token as fee)
-            encodeExtraArgsV2(0n, true) // Gas limit set to 0 (because transferring to EOA), OoO (Out of Order) execution enabled
+            encodeExtraArgsV2(100000n, true) // Gas limit set to 200000. This is a reasonable default for most messages, OoO (Out of Order) execution enabled
         );
 
         const baseFee: bigint = await ccipRouterContract.getFee(networkConfig.aptos.chainSelector, ccipMessage);
@@ -210,7 +215,7 @@ async function transferTokenPayNative(wallet: ethers.Wallet, ccipRouterContract:
         // Approve the token transfer
         await approveToken(wallet, await ccipRouterContract.getAddress(), tokenAddress, tokenAmount);
 
-        console.log("Proceeding with the token transfer...");
+        console.log("Proceeding with the message transfer...");
 
         const tx = await ccipRouterContract.ccipSend(
             networkConfig.aptos.chainSelector,
@@ -240,7 +245,11 @@ async function transferTokenPayNative(wallet: ethers.Wallet, ccipRouterContract:
 
 }
 
-async function sendTokenFromEvmToAptos(tokenAmount: number) {
+/*
+tokenAmount: number - The amount of CCIP-BnM token to send
+aptosAccountAddress: string - The Aptos account address to forward the token to
+**/
+async function sendTokenFromEvmToAptos(aptosAccountAddress: string, tokenAmount: number, ) {
     // console.log(await ccipRouterContract.isChainSupported(networkConfig.aptos.chainSelector));
 
     let recipient = argv.aptosReceiver;
@@ -271,16 +280,16 @@ async function sendTokenFromEvmToAptos(tokenAmount: number) {
         );
 
         tokenAddress = networkConfig.sepolia.ccipBnMTokenAddress;
-
+        
         const parsedTokenAmount = await parseTokenAmount(tokenAddress, tokenAmount, wallet.provider as ethers.Provider);
 
         explorerUrl = networkConfig.sepolia.explorerUrl;
 
         if (argv.feeToken === networkConfig.aptos.feeTokenNameLink) {
             feeTokenAddress = networkConfig.sepolia.linkTokenAddress;
-            transferTokenPayLink(wallet, ccipRouterContract, ccipOnRampContract, recipient, tokenAddress, parsedTokenAmount, feeTokenAddress, explorerUrl);
+            transferTokenPayLink(wallet, ccipRouterContract, ccipOnRampContract, recipient, aptosAccountAddress, tokenAddress, parsedTokenAmount, feeTokenAddress, explorerUrl);
         } else if (argv.feeToken === networkConfig.aptos.feeTokenNameNative) {
-            transferTokenPayNative(wallet, ccipRouterContract, ccipOnRampContract, recipient, tokenAddress, parsedTokenAmount, explorerUrl);
+            transferTokenPayNative(wallet, ccipRouterContract, ccipOnRampContract, recipient, aptosAccountAddress, tokenAddress, parsedTokenAmount, explorerUrl);
         } else {
             throw new Error("Invalid fee token specified. Please specify fee token use --feeToken link or --feeToken native.");
         }
@@ -307,16 +316,16 @@ async function sendTokenFromEvmToAptos(tokenAmount: number) {
         );
 
         tokenAddress = networkConfig.avalancheFuji.ccipBnMTokenAddress;
-
+        
         const parsedTokenAmount = await parseTokenAmount(tokenAddress, tokenAmount, wallet.provider as ethers.Provider);
 
         explorerUrl = networkConfig.avalancheFuji.explorerUrl;
 
         if (argv.feeToken === networkConfig.aptos.feeTokenNameLink) {
             feeTokenAddress = networkConfig.avalancheFuji.linkTokenAddress;
-            transferTokenPayLink(wallet, ccipRouterContract, ccipOnRampContract, recipient, tokenAddress, parsedTokenAmount, feeTokenAddress, explorerUrl);
+            transferTokenPayLink(wallet, ccipRouterContract, ccipOnRampContract, recipient, aptosAccountAddress, tokenAddress, parsedTokenAmount, feeTokenAddress, explorerUrl);
         } else if (argv.feeToken === networkConfig.aptos.feeTokenNameNative) {
-            transferTokenPayNative(wallet, ccipRouterContract, ccipOnRampContract, recipient, tokenAddress, parsedTokenAmount, explorerUrl);
+            transferTokenPayNative(wallet, ccipRouterContract, ccipOnRampContract, recipient, aptosAccountAddress, tokenAddress, parsedTokenAmount, explorerUrl);
         }
         else {
             throw new Error("Invalid fee token specified. Please specify fee token use --feeToken link or --feeToken native.");
@@ -383,4 +392,4 @@ async function handleError(
     }
 }
 
-sendTokenFromEvmToAptos(argv.amount);
+sendTokenFromEvmToAptos(argv.aptosAccount, argv.amount);
