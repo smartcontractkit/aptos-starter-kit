@@ -2,7 +2,7 @@ import { Account, Aptos, AptosConfig, Ed25519PrivateKey, Network } from "@aptos-
 import * as dotenv from 'dotenv';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { networkConfig } from "../../helper-config";
+import { networkConfig } from "../../../helper-config";
 
 dotenv.config();
 
@@ -18,7 +18,7 @@ async function dripCCIPBnMToken() {
     // Set up the account with the private key
     const privateKeyHex = process.env.PRIVATE_KEY_HEX;
     if (!privateKeyHex) {
-        throw new Error("Please set the environment variable PRIVATE_KEY.");
+        throw new Error("Please set the environment variable PRIVATE_KEY_HEX.");
     }
     const privateKey = new Ed25519PrivateKey(privateKeyHex);
     const account = Account.fromPrivateKey({ privateKey });

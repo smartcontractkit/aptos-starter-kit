@@ -3,7 +3,6 @@ import OffRamp_1_6_ABI from "../config/abi/OffRamp_1_6";
 import { networkConfig } from "../../helper-config";
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
 
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -18,20 +17,19 @@ const argv = yargs(hideBin(process.argv))
         description: 'Specify the destination chain where the token will be sent',
         demandOption: true,
         choices: [
-            networkConfig.aptos.destChains.ethereumSepolia,
-            networkConfig.aptos.destChains.avalancheFuji
+            networkConfig.aptos.destChains.ethereumSepolia
         ]
     })
     .parseSync();
 
 
 let destChainRpcUrl: string | undefined;
+let ccipOfframpAddress: string | undefined;
 if (argv.destChain === networkConfig.sepolia.networkName) {
     destChainRpcUrl = process.env.ETHEREUM_SEPOLIA_RPC_URL;
-} else if (argv.destChain === networkConfig.avalancheFuji.networkName) {
-    destChainRpcUrl = process.env.AVALANCHE_FUJI_RPC_URL;
+    ccipOfframpAddress = networkConfig.sepolia.ccipOfframpAddress;
 } else {
-    throw new Error("Invalid destination chain specified. Please specify --destChain sepolia or --destChain fuji.");
+    throw new Error("Invalid destination chain specified. Please specify --destChain sepolia.");
 }
 
 const provider = new ethers.JsonRpcProvider(destChainRpcUrl);
@@ -45,18 +43,13 @@ enum MessageExecutionState {
 }
 
 async function findExecutionStateChangeByMessageId() {
-    // set up the Aptos client
-    const aptosConfig = new AptosConfig({ network: Network.TESTNET });
-    const aptos = new Aptos(aptosConfig);
-
-
     // check the status on evm based on the messageId
     const iface = new ethers.Interface(OffRamp_1_6_ABI);
     const eventTopic = iface.getEvent("ExecutionStateChanged")!.topicHash;
     const latestBlock = await provider.getBlockNumber();
 
     const logs = await provider.getLogs({
-        address: networkConfig.avalancheFuji.ccipOfframpAddress,
+        address: ccipOfframpAddress,
         fromBlock: latestBlock - 499, // Using a range of 500 blocks considering the RPC limits
         toBlock: latestBlock,
         topics: [eventTopic],

@@ -1,6 +1,17 @@
 import { Account, Aptos, AptosConfig, Ed25519PrivateKey, Network, Hex, MoveVector } from "@aptos-labs/ts-sdk";
 import  * as dotenv from 'dotenv';
 dotenv.config();
+import { networkConfig } from "../helper-config";
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
+
+const argv = yargs(hideBin(process.argv))
+    .option('priceFeedDemo', {
+        type: 'string',
+        description: 'Specify object address of the price feed demo module address',
+        demandOption: true,
+    })
+    .parseSync();
 
 // Function to call the fetch_price entry function
 async function fetchPrice(): Promise<string> {
@@ -10,17 +21,9 @@ async function fetchPrice(): Promise<string> {
         const aptos = new Aptos(config);
 
         // Define the module and function details
-        const MODULE_ADDRESS = process.env.STARTER_MODULE_ADDRESS;
-        const DATA_FEED_ID = process.env.DATA_FEED_ID;
-        if(MODULE_ADDRESS === undefined || DATA_FEED_ID === undefined) {
-            throw new Error("STARTER_MODULE_ADDRESS or DATA_FEED_BTC environment variables are not set.");
-        }
-        
-        const MODULE_NAME = process.env.DATA_FEED_DEMO_MODULE_NAME;
-        if(MODULE_NAME === undefined) {
-            throw new Error("DATA_FEED_DEMO_MODULE_NAME environment variable is not set.");
-        }
-        
+        const moduleAddr = argv.priceFeedDemo;
+        const dataFeedId = networkConfig.aptos.dataFeedId;
+        const moduleName = networkConfig.aptos.dataFeedDemoModuleName;
         const functionName = "fetch_price";
 
         // Account address for which we want to fetch price data
@@ -35,8 +38,8 @@ async function fetchPrice(): Promise<string> {
         const transaction = await aptos.transaction.build.simple({
             sender: account.accountAddress,
             data: {
-                function: `${MODULE_ADDRESS}::${MODULE_NAME}::${functionName}`,
-                functionArguments: [MoveVector.U8(Hex.hexInputToUint8Array(DATA_FEED_ID))],
+                function: `${moduleAddr}::${moduleName}::${functionName}`,
+                functionArguments: [MoveVector.U8(Hex.hexInputToUint8Array(dataFeedId))],
             }
         });
 

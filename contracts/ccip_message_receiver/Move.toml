@@ -1,0 +1,29 @@
+[package]
+name = "ccip_message_receiver"
+version = "1.0.0"
+authors = []
+
+[addresses]
+receiver = "_"
+deployer = "_"
+ccip = "0xc748085bd02022a9696dfa2058774f92a07401208bbd34cfd0c6d0ac0287ee45"
+mcms = "0xbdf1b9aacb4e21bf6f255105831df0172e911d4748e488196fde10d2e2a4e32d"
+mcms_register_entrypoints = "0x0"
+ccip_onramp = "0xc748085bd02022a9696dfa2058774f92a07401208bbd34cfd0c6d0ac0287ee45"
+ccip_router = "0xc748085bd02022a9696dfa2058774f92a07401208bbd34cfd0c6d0ac0287ee45"
+
+[dev-addresses]
+receiver = "0x11"
+deployer = "0x12"
+ccip_token_pool = "0x13"
+burn_mint_local_token = "0x14"
+lock_release_local_token = "0x15"
+burn_mint_token_pool = "0x16"
+lock_release_token_pool = "0x17"
+
+[dependencies]
+AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework", rev = "mainnet" }
+ChainlinkCCIPRouter = { git = "https://github.com/smartcontractkit/chainlink-aptos.git", subdir = "contracts/ccip/ccip_router", rev = "develop" }
+ChainlinkCCIP = { git = "https://github.com/smartcontractkit/chainlink-aptos.git", subdir = "contracts/ccip/ccip", rev = "develop" }
+
+[dev-dependencies]

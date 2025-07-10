@@ -1,6 +1,17 @@
 import { Aptos, AptosConfig, Network, Account, Ed25519PrivateKey } from "@aptos-labs/ts-sdk";
 import  * as dotenv from 'dotenv';
 dotenv.config();
+import { networkConfig } from "../helper-config";
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
+
+const argv = yargs(hideBin(process.argv))
+    .option('priceFeedDemo', {
+        type: 'string',
+        description: 'Specify object address of the price feed demo module address',
+        demandOption: true,
+    })
+    .parseSync();
 
 // Interfaces for the PriceData optional type and the PriceData structure
 interface PriceData {
@@ -20,14 +31,8 @@ async function getPriceData(): Promise<PriceData | null> {
     const aptos = new Aptos(config);
 
     // Define the module and function details
-    const MODULE_ADDRESS = process.env.STARTER_MODULE_ADDRESS;
-    if(MODULE_ADDRESS === undefined) {
-        throw new Error("STARTER_MODULE_ADDRESS environment variable is not set.");
-    }
-    const MODULE_NAME = process.env.DATA_FEED_DEMO_MODULE_NAME;
-    if(MODULE_NAME === undefined) {
-        throw new Error("DATA_FEED_DEMO_MODULE_NAME environment variable is not set.");
-    }
+    const moduleAddr = argv.priceFeedDemo
+    const moduleName = networkConfig.aptos.dataFeedDemoModuleName;
     const FUNCTION_NAME = "get_price_data";
 
     // Account address for which we want to fetch price data
@@ -41,7 +46,7 @@ async function getPriceData(): Promise<PriceData | null> {
     // Call the view function
     const result = await aptos.view({ 
         payload: {
-            function: `${MODULE_ADDRESS}::${MODULE_NAME}::${FUNCTION_NAME}`,
+            function: `${moduleAddr}::${moduleName}::${FUNCTION_NAME}`,
             functionArguments: [account.accountAddress],
             typeArguments: [],
         } 

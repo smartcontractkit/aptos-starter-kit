@@ -25,11 +25,26 @@ async function getModuleEvents() {
   const ccipRouterModuleAddr = networkConfig.aptos.ccipObjectAddress
 
   try {
-    const events = await aptos.getModuleEventsByEventType({
+
+    async function getStateAddress(aptos: Aptos): Promise<string> {
+      const stateAddress = await aptos.view({
+        payload: {
+          function: `${ccipRouterModuleAddr}::offramp::get_state_address`,
+          typeArguments: [],
+          functionArguments: [],
+        }
+      });
+      return stateAddress[0] as string;
+    }
+
+    const stateAddress = await getStateAddress(aptos);
+    
+    const events = await aptos.getAccountEventsByEventType({
+      accountAddress: stateAddress,
       eventType: `${ccipRouterModuleAddr}::offramp::ExecutionStateChanged`,
       options: {
         limit: 100,
-        orderBy: [{ transaction_version: "desc" }]
+        orderBy: [{ transaction_version: "desc" }] 
       },
     });
 
