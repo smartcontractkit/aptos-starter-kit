@@ -3,11 +3,35 @@ import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
 import { networkConfig } from "../../helper-config";
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 
 dotenv.config();
 
-// Avalanche Fuji config
-const FUJI_RPC_URL = process.env.AVALANCHE_FUJI_RPC_URL
+const argv = yargs(hideBin(process.argv))
+    .option("destChain", {
+        type: 'string',
+        description: 'Specify the destination chain where the token will be sent',
+        demandOption: true,
+        choices: [
+            networkConfig.aptos.destChains.ethereumSepolia,
+            networkConfig.aptos.destChains.avalancheFuji
+        ]
+    })
+    .parseSync();
+
+let destChainRpcUrl: string | undefined;
+if (argv.destChain === networkConfig.sepolia.networkName) {
+    destChainRpcUrl = process.env.ETHEREUM_SEPOLIA_RPC_URL;
+} else if (argv.destChain === networkConfig.avalancheFuji.networkName) {
+    destChainRpcUrl = process.env.AVALANCHE_FUJI_RPC_URL;
+} else {
+    throw new Error("Invalid destination chain specified. Please specify --destChain sepolia or --destChain fuji.");
+}
+
+const provider = new ethers.JsonRpcProvider(destChainRpcUrl);
+
+// Fetch the eth private key from .env
 const PRIVATE_KEY = process.env.PRIVATE_KEY
 
 // load the contract ABI and bytecode
@@ -17,11 +41,11 @@ const BYTECODE = contractData.bytecode;
 
 async function deployReceiverOnEvm() {
   try {
-    if (!FUJI_RPC_URL || !PRIVATE_KEY) {
-        throw new Error("please set AVALANCHE_FUJI_RPC_URL and PRIVATE_KEY in .env")
+    if (!PRIVATE_KEY) {
+        throw new Error("please set PRIVATE_KEY in .env")
     }
+    
     // set up provider and wallet
-    const provider = new ethers.JsonRpcProvider(FUJI_RPC_URL);
     const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
 
     // create a contract factory
