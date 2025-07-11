@@ -1,5 +1,6 @@
 import { Account, Aptos, AptosConfig, Ed25519PrivateKey, Network, Hex, MoveVector } from "@aptos-labs/ts-sdk";
 import  * as dotenv from 'dotenv';
+import { networkConfig } from "../helper-config";
 dotenv.config();
 
 // Function to call the fetch_price entry function
@@ -11,17 +12,12 @@ async function fetchPrice(): Promise<string> {
 
         // Define the module and function details
         const MODULE_ADDRESS = process.env.STARTER_MODULE_ADDRESS;
-        const DATA_FEED_ID = process.env.DATA_FEED_ID;
-        if(MODULE_ADDRESS === undefined || DATA_FEED_ID === undefined) {
+        const MODULE_NAME = networkConfig.aptos.dataFeedDemoModuleName;
+        const DATA_FEED_ID = networkConfig.aptos.dataFeedId;
+        const functionName = "fetch_price";
+        if(MODULE_ADDRESS === undefined) {
             throw new Error("STARTER_MODULE_ADDRESS or DATA_FEED_BTC environment variables are not set.");
         }
-        
-        const MODULE_NAME = process.env.DATA_FEED_DEMO_MODULE_NAME;
-        if(MODULE_NAME === undefined) {
-            throw new Error("DATA_FEED_DEMO_MODULE_NAME environment variable is not set.");
-        }
-        
-        const functionName = "fetch_price";
 
         // Account address for which we want to fetch price data
         const PRIVATE_KEY_HEX = process.env.PRIVATE_KEY_HEX;

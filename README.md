@@ -25,50 +25,56 @@ owner = "<replace sender with your account address>"
 ```
 
 ## Publish the module on Aptos testnet
-<b>Publish the module with command</b>
+> **NOTE**: In the tests, the CCIP Receiver module also handles tokens (meaning it can receive tokens from EVM chains and forward the received tokens to another Aptos address). Therefore, it must be deployed under a resource account. A resource account allows the module to generate a signer for its own address on-chain, which is required to authorize the withdrawal or transfer of those assets. Without this signer capability, any tokens the module receives would be locked. All modules will be published under a resource account. 
+
+Run the following command to create a resource account and publish the module:
+
 ```shell
-aptos move publish --skip-fetch-latest-git-deps
+aptos move create-resource-account-and-publish-package --address-name receiver --seed <unique seed corresponding to your aptos account> --named-addresses deployer=<your aptos account address>
 ```
+
+> **NOTE**: The `--seed` parameter is used to create a resource account. You can use any unique hex string (such as `0x1`, `0x2`, etc.) as the seed, but it must be unique for your account (i.e., you cannot use the same seed for multiple resource accounts under the same account).
+
+
 With the command, you will see information like below in terminal:
 ```shell
-Transaction submitted: https://explorer.aptoslabs.com/txn/0x5ac473255ca8e7865d5b620f46e1c21e7fbe413c882bf90254a4f02c7554e86b?network=testnet
+Do you want to publish this package under the resource account's address 0x5c63cf5c58ae2ae8b9102412ef8cd91d49c3c8e6f3aa5ae61e7a11526f9429b8? [yes/no] >
+yes
+package size 7736 bytes
+Do you want to submit a transaction for a range of [706300 - 1059400] Octas at a gas unit price of 100 Octas? [yes/no] >
+yes
+Transaction submitted: https://explorer.aptoslabs.com/txn/0x0e198c928a57926bfd33884c40fe405e5be22ad85d322a1748619c8e362453bc?network=testnet
 {
-  "Result": {
-    "transaction_hash": "0x5ac473255ca8e7865d5b620f46e1c21e7fbe413c882bf90254a4f02c7554e86b",
-    "gas_used": 1142,
-    "gas_unit_price": 100,
-    "sender": "9c57740685301c316158afd34608cf8286b869ce164301f4903180cc52605ad9",
-    "sequence_number": 2,
-    "success": true,
-    "timestamp_us": 1749639336582974,
-    "version": 6782783566,
-    "vm_status": "Executed successfully"
-  }
+  "Result": "Success"
 }
 ```
-You successfully published the module on the aptos testnet and the module is saved under your account now. The address of the module is the same as your account address. 
+You successfully created a resource account and published modules under the resource account on the aptos testnet. 
 
 ## Install dependencies and set config in `.env`
 1. Run `npm install` to install dependencies.
 
 2. Rename `.env.example` to `.env`.
 
-3. Set `PRIVATE_KEY_HEX`, `STARTER_MODULE_ADDRESS` and `RECEIVER` in `.env`.
+3. Set following environment variables in `.env`.
 ```
 PRIVATE_KEY_HEX=<YOUR_PRIVATE_KEY_HEX>
-DATA_FEED_DEMO_MODULE_ADDRESS=<YOUR_ACCOUNT_ADDRESS>
+PRIVATE_KEY=<YOUR_EVM_PRIVATE_KEY>
+STARTER_MODULE_ADDRESS=<RESOURCE_ACCOUNT_ADDRESS>
 RECEIVER=<YOUR_EVM_ADDRESS>
+AVALANCHE_FUJI_RPC_URL=<RPC_URL_FOR_AVALANCHE_FUJI>
 ```
-`PRIVATE_KEY_HEX` and `STARTER_MODULE_ADDRESS` can be found in `~/.aptos/config.yaml` and remove the prefix `ed25519-priv-` before private key. 
+- `PRIVATE_KEY_HEX` is aptos account private key. It can be found in `~/.aptos/config.yaml` and remove the prefix `ed25519-priv-` before private key. 
+- `PRIVATE_KEY` is EVM account private key. Please make sure you have native tokens in the account to pay transaction fee.
+- `STARTER_MODULE_ADDRESS` is the resource account address and it can be found in the response from last command. 
+- `RECEIVER` is EVM address that is used to receive the token and messages from Aptos. The address is used for CCIP and you can skip this config if you only want to use data feed. 
+- `AVALANCHE_FUJI_RPC_URL` is the RPC url for avalanche fuji testnet(avalanche fuji is used for the test, you can use other evm network that is supported by CCIP). The address is used for CCIP and you can skip this config if you only want to use data feed. 
 
-`RECEIVER` is EVM address that is used to receive the token and messages from Aptos. The address is used for CCIP and you can skip this config if you only want to use data feed. 
-
-## Use CCIP to send token and messages from Aptos to EVM
+## Send CCIP messages from Aptos to EVM
 <b>Note: </b>In the below examples, Avalanche Fuji is used as EVM destination chain. 
 
 ### Send BnM tokens
 
-Make sure you have BnM and fee tokens in your account.
+Make sure you have BnM and fee tokens(Link token could be a fee token) in your account.
 
 #### LINK Tokens on Aptos
 
@@ -152,11 +158,11 @@ npx ts-node scripts/aptos2evm/checkMsgExecutionStateOnEvm.ts --txHash <your tx h
 1. Replace the `RECEIVER` in `.env` with an EOA address on Avalanche
 2. Send the BnM tokens from aptos testnet to Avalanche Fuji
 ```shell
-npx ts-node scripts/aptos2evm/ccipSendToken.ts --feeToken link --destChain Fuji --amount 0.1
+npx ts-node scripts/aptos2evm/ccipSendToken.ts --feeToken link --destChain fuji --amount 0.1
 ``` 
 Update the param from `link` to `native` if you want to pay native token (aptos) for CCIP fee. 
 ```shell
-npx ts-node scripts/aptos2evm/ccipSendToken.ts --feeToken native --destChain Fuji --amount 0.1
+npx ts-node scripts/aptos2evm/ccipSendToken.ts --feeToken native --destChain fuji --amount 0.1
 ``` 
 3. check status of CCIP message on evm chains
 ```shell
@@ -235,21 +241,9 @@ npx ts-node scripts/evm2aptos/checkMsgExecutionStateOnAptos.ts --msgId <your cci
 You will see `Execution state for ccip message <your ccip message id> is SUCCESS` if the message is executed successfully on Aptos. 
 
 ### Send arbitrary data
-1. Deploy the Receiver module on Aptos Testnet. (Source codes of the receiver module can be found inside the [`ccip_message_receiver.move`](sources/ccip_message_receiver.move) file.)
+1. Now, you can copy the resource account address from `.env` file as you need to use that as the value of `--aptosReceiver` parameter in the next step.
 
-> **NOTE**: In this case, the CCIP Receiver module also handles tokens (meaning it can receive tokens from EVM chains and forward the received tokens to another Aptos address). Therefore, it must be deployed under a resource account. A resource account allows the module to generate a signer for its own address on-chain, which is required to authorize the withdrawal or transfer of those assets. Without this signer capability, any tokens the module receives would be locked.
-
-2. Run the following command to create a resource account and publish the module:
-
-```shell
-aptos move create-resource-account-and-publish-package --address-name receiver --seed <unique seed corresponding to your aptos account> --named-addresses deployer=<your aptos account address>
-```
-
-> **NOTE**: The `--seed` parameter is used to create a resource account. You can use any unique hex string (such as `0x1`, `0x2`, etc.) as the seed, but it must be unique for your account (i.e., you cannot use the same seed for multiple resource accounts under the same account).
-
-3. Now, you can copy the resource account address from the output of the previous command as you need to use that as the value of `--aptosReceiver` parameter in the next step.
-
-4. Send an arbitrary data to the receiver using link token as fee token for ccip.
+2. Send an arbitrary data to the receiver using link token as fee token for ccip.
 
 ```shell
 npx ts-node scripts/evm2aptos/ccipSendMsgRouter.ts --feeToken link --sourceChain fuji --aptosReceiver <your resource account address> --msgString "Hello Aptos from EVM"

@@ -1,5 +1,6 @@
 import { Aptos, AptosConfig, Network, Account, Ed25519PrivateKey } from "@aptos-labs/ts-sdk";
 import  * as dotenv from 'dotenv';
+import { networkConfig } from "../helper-config";
 dotenv.config();
 
 // Interfaces for the PriceData optional type and the PriceData structure
@@ -24,10 +25,7 @@ async function getPriceData(): Promise<PriceData | null> {
     if(MODULE_ADDRESS === undefined) {
         throw new Error("STARTER_MODULE_ADDRESS environment variable is not set.");
     }
-    const MODULE_NAME = process.env.DATA_FEED_DEMO_MODULE_NAME;
-    if(MODULE_NAME === undefined) {
-        throw new Error("DATA_FEED_DEMO_MODULE_NAME environment variable is not set.");
-    }
+    const MODULE_NAME = networkConfig.aptos.dataFeedDemoModuleName;
     const FUNCTION_NAME = "get_price_data";
 
     // Account address for which we want to fetch price data

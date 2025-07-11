@@ -1,4 +1,4 @@
-module receiver::ccip_message_receiver {
+module ccip_ra::ccip_message_receiver {
     use std::account;
     use std::event;
     use std::object::{Self, Object};
@@ -66,11 +66,11 @@ module receiver::ccip_message_receiver {
 
     public fun ccip_receive<T: key>(_metadata: Object<T>): Option<u128> acquires CCIPReceiverState {
         /* load state and rebuild a signer for the resource account */
-        let state = borrow_global_mut<CCIPReceiverState>(@receiver);
+        let state = borrow_global_mut<CCIPReceiverState>(@ccip_ra);
         let state_signer = account::create_signer_with_capability(&state.signer_cap);
 
         let message = receiver_registry::get_receiver_input(
-            @receiver, CCIPReceiverProof {}
+            @ccip_ra, CCIPReceiverProof {}
         );
 
         let data = client::get_data(&message);
@@ -89,7 +89,7 @@ module receiver::ccip_message_receiver {
 
                 let fa_token = object::address_to_object<Metadata>(token_addr);
                 let fa_store_sender =
-                    primary_fungible_store::ensure_primary_store_exists(@receiver, fa_token);
+                    primary_fungible_store::ensure_primary_store_exists(@ccip_ra, fa_token);
                 let fa_store_receiver =
                     primary_fungible_store::ensure_primary_store_exists(
                         final_recipient, fa_token
@@ -130,15 +130,15 @@ module receiver::ccip_message_receiver {
         token_address: address,
     ) acquires CCIPReceiverState {
 
-        assert!(exists<CCIPReceiverState>(@receiver), E_RESOURCE_NOT_FOUND_ON_ACCOUNT);
+        assert!(exists<CCIPReceiverState>(@ccip_ra), E_RESOURCE_NOT_FOUND_ON_ACCOUNT);
         assert!(signer::address_of(sender) == @deployer, E_UNAUTHORIZED);
 
-        let state = borrow_global_mut<CCIPReceiverState>(@receiver);
+        let state = borrow_global_mut<CCIPReceiverState>(@ccip_ra);
         let state_signer = account::create_signer_with_capability(&state.signer_cap);
 
         let fa_token = object::address_to_object<Metadata>(token_address);
         let fa_store_sender =
-            primary_fungible_store::ensure_primary_store_exists(@receiver, fa_token);
+            primary_fungible_store::ensure_primary_store_exists(@ccip_ra, fa_token);
         let fa_store_receiver =
             primary_fungible_store::ensure_primary_store_exists(
                 recipient, fa_token
