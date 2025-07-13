@@ -35,7 +35,7 @@ async function sendMessageFromAptosToEvm() {
     // Set up the account with the private key
     const privateKeyHex = process.env.PRIVATE_KEY_HEX;
     if (!privateKeyHex) {
-        throw new Error("Please set the environment variable PRIVATE_KEY.");
+        throw new Error("Please set the environment variable PRIVATE_KEY_HEX.");
     }
     const privateKey = new Ed25519PrivateKey(privateKeyHex);
     const account = Account.fromPrivateKey({privateKey});
