@@ -159,7 +159,12 @@ async function sendMessagePayLink(wallet: ethers.Wallet, ccipRouterContract: eth
         console.log("✅ Transaction successful:", `${explorerUrl}/tx/${tx.hash}`);
         await extractCCIPMessageId(ccipOnRampContract, receipt);
     } catch (error) {
-        console.error(error);
+        handleError([
+            { name: "CCIPRouterInterface", iface: ccipRouterContract.interface },
+            { name: "CCIPOnRampInterface", iface: ccipOnRampContract.interface },
+            { name: "ERC20Interface", iface: new Interface(ERC20_ABI) },
+            { name: "FeeQuoterInterface", iface: new Interface(FeeQuoter_1_6_ABI) }
+        ], error);
     }
 
 }
@@ -202,7 +207,6 @@ async function sendMessagePayNative(wallet: ethers.Wallet, ccipRouterContract: e
         console.log("✅ Transaction successful:", `${explorerUrl}/tx/${tx.hash}`);
         await extractCCIPMessageId(ccipOnRampContract, receipt);
     } catch (error) {
-        console.error(error);
 
         handleError([
             { name: "CCIPRouterInterface", iface: ccipRouterContract.interface },

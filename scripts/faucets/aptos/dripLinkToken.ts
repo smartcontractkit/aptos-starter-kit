@@ -2,7 +2,7 @@ import { Account, Aptos, AptosConfig, Ed25519PrivateKey, Network } from "@aptos-
 import * as dotenv from 'dotenv';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { networkConfig } from "../../helper-config";
+import { networkConfig } from "../../../helper-config";
 
 dotenv.config();
 
@@ -14,7 +14,7 @@ const argv = yargs(hideBin(process.argv))
     })
     .parseSync();
 
-async function dripCCIPBnMToken() {
+async function dripLinkToken() {
     // Set up the account with the private key
     const privateKeyHex = process.env.PRIVATE_KEY_HEX;
     if (!privateKeyHex) {
@@ -27,13 +27,13 @@ async function dripCCIPBnMToken() {
     const aptosConfig = new AptosConfig({ network: Network.TESTNET });
     const aptos = new Aptos(aptosConfig);
 
-    const ccipBnMFaucetAddress = networkConfig.aptos.ccipBnMFaucetAddress;
+    const linkFaucetAddress = networkConfig.aptos.linkFaucetAddress;
 
     try {
         const transaction = await aptos.transaction.build.simple({
             sender: account.accountAddress,
             data: {
-                function: `${ccipBnMFaucetAddress}::faucet::drip`,
+                function: `${linkFaucetAddress}::faucet::drip`,
                 functionArguments: [
                     argv.to, // recipient address
                 ],
@@ -71,7 +71,7 @@ async function dripCCIPBnMToken() {
             throw new Error(`Transaction execution failed: ${executed.vm_status}`);
         }
 
-        console.log(`1 CCIP-BnM token is minted to ${account.accountAddress} successfully.\nPlease check the transaction at https://explorer.aptoslabs.com/txn/${executed.hash}?network=testnet`);
+        console.log(`1 LINK token is minted to ${account.accountAddress} successfully.\nPlease check the transaction at https://explorer.aptoslabs.com/txn/${executed.hash}?network=testnet`);
 
 
     } catch (error) {
@@ -79,4 +79,4 @@ async function dripCCIPBnMToken() {
     }
 }
 
-dripCCIPBnMToken();
+dripLinkToken();

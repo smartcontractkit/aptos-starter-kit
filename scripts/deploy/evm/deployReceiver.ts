@@ -10,6 +10,7 @@ dotenv.config();
 const FUJI_RPC_URL = process.env.AVALANCHE_FUJI_RPC_URL
 const PRIVATE_KEY = process.env.PRIVATE_KEY
 
+__dirname = path.resolve(__dirname, '../../aptos2evm'); // Adjust the path 
 // load the contract ABI and bytecode
 const contractData = JSON.parse(fs.readFileSync(path.join(__dirname, "receiver", "receiver.json"), "utf8"));
 const ABI = contractData.abi;

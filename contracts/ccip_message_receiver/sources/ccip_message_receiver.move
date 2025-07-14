@@ -124,7 +124,7 @@ module receiver::ccip_message_receiver {
         option::none()
     }
 
-    public entry fun withdraw_tokens(
+    public entry fun withdraw_token(
         sender: &signer, 
         recipient: address, 
         token_address: address,

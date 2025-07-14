@@ -185,12 +185,17 @@ async function transferTokenPayLink(wallet: ethers.Wallet, ccipRouterContract: e
         console.log("✅ Transaction successful:", `${explorerUrl}/tx/${tx.hash}`);
         await extractCCIPMessageId(ccipOnRampContract, receipt);
     } catch (error) {
-        console.error(error);
+        handleError([
+            { name: "CCIPRouterInterface", iface: ccipRouterContract.interface },
+            { name: "CCIPOnRampInterface", iface: ccipOnRampContract.interface },
+            { name: "ERC20Interface", iface: new Interface(ERC20_ABI) },
+            { name: "FeeQuoterInterface", iface: new Interface(FeeQuoter_1_6_ABI) }
+        ], error);
     }
 
 }
 
-async function transferTokenPayNative(wallet: ethers.Wallet, ccipRouterContract: ethers.Contract, ccipOnRampContract: ethers.Contract, recipient: string, aptosAccountAddress: string, tokenAddress: string, tokenAmount: bigint,  explorerUrl: string) {
+async function transferTokenPayNative(wallet: ethers.Wallet, ccipRouterContract: ethers.Contract, ccipOnRampContract: ethers.Contract, recipient: string, aptosAccountAddress: string, tokenAddress: string, tokenAmount: bigint, explorerUrl: string) {
 
     try {
 
@@ -233,7 +238,6 @@ async function transferTokenPayNative(wallet: ethers.Wallet, ccipRouterContract:
         console.log("✅ Transaction successful:", `${explorerUrl}/tx/${tx.hash}`);
         await extractCCIPMessageId(ccipOnRampContract, receipt);
     } catch (error) {
-        console.error(error);
 
         handleError([
             { name: "CCIPRouterInterface", iface: ccipRouterContract.interface },
@@ -249,7 +253,7 @@ async function transferTokenPayNative(wallet: ethers.Wallet, ccipRouterContract:
 tokenAmount: number - The amount of CCIP-BnM token to send
 aptosAccountAddress: string - The Aptos account address to forward the token to
 **/
-async function sendTokenFromEvmToAptos(aptosAccountAddress: string, tokenAmount: number, ) {
+async function sendTokenFromEvmToAptos(aptosAccountAddress: string, tokenAmount: number,) {
     // console.log(await ccipRouterContract.isChainSupported(networkConfig.aptos.chainSelector));
 
     let recipient = argv.aptosReceiver;
@@ -280,7 +284,7 @@ async function sendTokenFromEvmToAptos(aptosAccountAddress: string, tokenAmount:
         );
 
         tokenAddress = networkConfig.sepolia.ccipBnMTokenAddress;
-        
+
         const parsedTokenAmount = await parseTokenAmount(tokenAddress, tokenAmount, wallet.provider as ethers.Provider);
 
         explorerUrl = networkConfig.sepolia.explorerUrl;
@@ -316,7 +320,7 @@ async function sendTokenFromEvmToAptos(aptosAccountAddress: string, tokenAmount:
         );
 
         tokenAddress = networkConfig.avalancheFuji.ccipBnMTokenAddress;
-        
+
         const parsedTokenAmount = await parseTokenAmount(tokenAddress, tokenAmount, wallet.provider as ethers.Provider);
 
         explorerUrl = networkConfig.avalancheFuji.explorerUrl;
