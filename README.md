@@ -385,7 +385,7 @@ Data: {
 1. Fetch the BTC/USD feed and save it to the account's global storage.
 
     ```shell
-    npx ts-node scripts/fetchPrice.ts
+    npx ts-node scripts/fetchPrice.ts --priceFeedDemo <price_feed_demo module object address>
     ```
 
     You will see infomation like below if the script runs successfully:
@@ -399,7 +399,7 @@ Data: {
 2. Retrieve this data using the view function.
 
     ```shell
-    npx ts-node scripts/getPriceData.ts
+    npx ts-node scripts/getPriceData.ts --priceFeedDemo <price_feed_demo module object address>
     ```
 
     You will see information like below if the script runs successfully:
