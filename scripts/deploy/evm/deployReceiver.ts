@@ -2,7 +2,7 @@ import { ethers } from "ethers";
 import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
-import { networkConfig } from "../../helper-config";
+import { networkConfig } from "../../../helper-config";
 
 dotenv.config();
 

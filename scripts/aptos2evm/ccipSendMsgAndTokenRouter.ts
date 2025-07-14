@@ -1,36 +1,45 @@
 import { Account, Aptos, AptosConfig, Ed25519PrivateKey, Network, MoveVector, Hex, MoveString } from "@aptos-labs/ts-sdk";
-import  * as dotenv from 'dotenv';
+import * as dotenv from 'dotenv';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { networkConfig } from "../../helper-config";
 import { encodeGenericExtraArgsV2, parseAmountToU64Decimals, fetchEventsByTxHash } from "./utils";
 import { ethers } from "ethers";
+import { a } from "@aptos-labs/ts-sdk/dist/common/accountAddress-AL8HRxQC";
 
 dotenv.config();
 
 const argv = yargs(hideBin(process.argv))
-  .option('feeToken', {
-    type: 'string',
-    description: 'Specify the fee token (link or native)',
-    demandOption: true,
-    choices: [
-        networkConfig.aptos.feeTokenNameLink, 
-        networkConfig.aptos.feeTokenNameNative
-    ],
-  }).option("destChain", {
-    type: 'string',
-    description: 'Specify the destination chain where the token will be sent',
-    demandOption: true,
-    choices: [
-        networkConfig.aptos.destChains.ethereumSepolia,
-        networkConfig.aptos.destChains.avalancheFuji
-    ]
-  }).option('amount', {
-    type: 'number',
-    description: 'Amount of token to send',
-    demandOption: true,
-  })
-  .parseSync();
+    .option('feeToken', {
+        type: 'string',
+        description: 'Specify the fee token (link or native)',
+        demandOption: true,
+        choices: [
+            networkConfig.aptos.feeTokenNameLink,
+            networkConfig.aptos.feeTokenNameNative
+        ],
+    }).option("destChain", {
+        type: 'string',
+        description: 'Specify the destination chain where the token will be sent',
+        demandOption: true,
+        choices: [
+            networkConfig.aptos.destChains.ethereumSepolia,
+            networkConfig.aptos.destChains.avalancheFuji
+        ]
+    }).option('amount', {
+        type: 'number',
+        description: 'Amount of token to send',
+        demandOption: true,
+    }).option('msgString', {
+        type: 'string',
+        description: 'Specify the message string to send',
+        demandOption: true
+    }).option('evmReceiver', {
+        type: 'string',
+        description: 'Specify the EVM Receiver Address',
+        demandOption: true
+    })
+    .parseSync();
 
 
 // Specify which network to connect to via AptosConfig
@@ -41,7 +50,7 @@ async function sendMsgAndTokenFromAptosToEvm(tokenAmount: number) {
         throw new Error("Please set the environment variable PRIVATE_KEY_HEX.");
     }
     const privateKey = new Ed25519PrivateKey(privateKeyHex);
-    const account = Account.fromPrivateKey({privateKey});
+    const account = Account.fromPrivateKey({ privateKey });
 
     // prepare `${ccipRouterModuleAddr}::${ccipRouterModuleName}::${SENDER_ENTRY_FUNC_NAME}`
     const ccipRouterModuleAddr = networkConfig.aptos.ccipObjectAddress
@@ -51,9 +60,9 @@ async function sendMsgAndTokenFromAptosToEvm(tokenAmount: number) {
     // Prepare the parameters for entry function
     // Chain selector
     let destChainSelector: string | undefined;
-    if(argv.destChain === networkConfig.aptos.destChains.ethereumSepolia) {
+    if (argv.destChain === networkConfig.aptos.destChains.ethereumSepolia) {
         destChainSelector = networkConfig.sepolia.chainSelector
-    } else if(argv.destChain === networkConfig.aptos.destChains.avalancheFuji) {
+    } else if (argv.destChain === networkConfig.aptos.destChains.avalancheFuji) {
         destChainSelector = networkConfig.avalancheFuji.chainSelector
     } else {
         destChainSelector = undefined
@@ -61,10 +70,7 @@ async function sendMsgAndTokenFromAptosToEvm(tokenAmount: number) {
     }
 
     // Fetch the receiver address and pad it to 32 bytes
-    const receiver = process.env.RECEIVER
-    if (!receiver) {
-        throw new Error("Please set the environment variable: RECEIVER");
-    }
+    const receiver = argv.evmReceiver;
     const receiverUint8Array = Hex.hexInputToUint8Array(receiver)
     if (receiverUint8Array.length !== 20) {
         throw new Error("EVM receiver address must be 20 bytes.");
@@ -74,7 +80,7 @@ async function sendMsgAndTokenFromAptosToEvm(tokenAmount: number) {
 
     // set the message to be sent
     const abiCoder = new ethers.AbiCoder();
-    const abiEncoded = abiCoder.encode(["string"], ["hello from aptos"]);
+    const abiEncoded = abiCoder.encode(["string"], [argv.msgString]);
     const abiEncodedBytes = ethers.getBytes(abiEncoded);
     const dataInVecU8 = MoveVector.U8(abiEncodedBytes);
 
@@ -85,18 +91,18 @@ async function sendMsgAndTokenFromAptosToEvm(tokenAmount: number) {
     const TOKEN_STORE_ADDR = "0x0"
 
     // set fee token address as user input
-    let feeToken = argv.feeToken === networkConfig.aptos.feeTokenNameLink 
+    let feeToken = argv.feeToken === networkConfig.aptos.feeTokenNameLink
         ? networkConfig.aptos.linkTokenAddress
         : argv.feeToken === networkConfig.aptos.feeTokenNameNative
-        ? networkConfig.aptos.nativeTokenAddress
-        : (() => {
-            throw new Error("Invalid fee token specified. Please specify fee token use --feeToken link or --feeToken native.");
-        })();
-    
+            ? networkConfig.aptos.nativeTokenAddress
+            : (() => {
+                throw new Error("Invalid fee token specified. Please specify fee token use --feeToken link or --feeToken native.");
+            })();
+
     if (!feeToken) {
         throw new Error("Please set the environment variable APTOS_FEE_TOKEN_LINK or APTOS_FEE_TOKEN_NATIVE.");
-    }    
-    
+    }
+
     // Setup the client
     const config = new AptosConfig({ network: Network.TESTNET });
     const aptos = new Aptos(config);
@@ -128,8 +134,8 @@ async function sendMsgAndTokenFromAptosToEvm(tokenAmount: number) {
         signerPublicKey: account.publicKey,
         transaction,
     });
-    
-    if(!userTransactionResponse.success) {
+
+    if (!userTransactionResponse.success) {
         throw new Error(`Transaction simulation failed: ${userTransactionResponse.vm_status}`);
     }
 
@@ -150,12 +156,12 @@ async function sendMsgAndTokenFromAptosToEvm(tokenAmount: number) {
         transactionHash: committedTransaction.hash,
     })
 
-    if(executed.success === false) {
+    if (executed.success === false) {
         throw new Error(`Transaction execution failed: ${executed.vm_status}`);
     }
 
     const messageId = await fetchEventsByTxHash(executed.hash, aptos);
     console.log(`Transaction submitted successfully. Please check transaction at https://explorer.aptoslabs.com/txn/${executed.hash}?network=testnet \nMessage Id is ${messageId}`);
 }
- 
+
 sendMsgAndTokenFromAptosToEvm(argv.amount)
