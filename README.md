@@ -170,7 +170,7 @@ npx ts-node scripts/aptos2evm/ccipSendTokenRouter.ts --feeToken native --destCha
 ### Check the CCIP message status on EVM chain
 
 ```shell
-npx ts-node scripts/checkMsgExecutionStateOnEvm.ts --msgId <your ccip message id> --destChain fuji
+npx ts-node scripts/aptos2evm/checkMsgExecutionStateOnEvm.ts --msgId <your ccip message id> --destChain fuji
 ```
 
 > **Note**: Since end-to-end transaction time depends primarily on the time to finality on the source blockchain (Aptos Testnet in this case), it's recommended to wait  20-30 seconds before running the script. For more details, refer to the [Finality by Blockchain](https://docs.chain.link/ccip/ccip-execution-latency#finality-by-blockchain) section in the CCIP documentation.
@@ -232,13 +232,13 @@ npx ts-node scripts/aptos2evm/ccipSendMsgAndTokenRouter.ts --feeToken native --d
 2. Send BnM tokens from Aptos Testnet to Avalanche Fuji.
 
     ```shell
-    npx ts-node scripts/aptos2evm/ccipSendToken.ts --feeToken link --destChain Fuji --amount 0.1 --aptosSender <your ccip_message_sender module address> --evmReceiver <your eoa / receiver contract address on fuji>
+    npx ts-node scripts/aptos2evm/ccipSendToken.ts --feeToken link --destChain fuji --amount 0.1 --aptosSender <your ccip_message_sender module address> --evmReceiver <your eoa / receiver contract address on fuji>
     ``` 
 
     Update the param from `link` to `native` if you want to pay native Aptos token (APT) for CCIP fee. 
 
     ```shell
-    npx ts-node scripts/aptos2evm/ccipSendToken.ts --feeToken native --destChain Fuji --amount 0.1 --aptosSender <your ccip_message_sender module address> --evmReceiver <your eoa / receiver contract address on fuji>
+    npx ts-node scripts/aptos2evm/ccipSendToken.ts --feeToken native --destChain fuji --amount 0.1 --aptosSender <your ccip_message_sender module address> --evmReceiver <your eoa / receiver contract address on fuji>
     ``` 
 
 ### Send arbitraty data using `ccip_message_sender` module
@@ -328,45 +328,29 @@ npx ts-node scripts/withdrawTokensFromReceiver.ts --network aptosTestnet --recei
 
 ### Send arbitrary data using Router contract
 
-1. Deploy the Receiver module on Aptos Testnet. 
+Send an arbitrary data to the receiver using link token as fee token for ccip.
 
-    > Source code of the receiver module can be found inside the [`ccip_message_receiver.move`](contracts/ccip_message_receiver/sources/ccip_message_receiver.move) file.
+```shell
+npx ts-node scripts/evm2aptos/ccipSendMsgRouter.ts --feeToken link --sourceChain fuji --aptosReceiver <your resource account address> --msgString "Hello Aptos from EVM"
+```
 
-    > **NOTE**: In this case, the CCIP Receiver module also handles tokens (meaning it can receive tokens from EVM chains and forward the received tokens to another Aptos address). Therefore, it must be deployed under a resource account. A resource account allows the module to generate a signer for its own address on-chain, which is required to authorize the withdrawal or transfer of those assets. Without this signer capability, any tokens the module receives would be locked.
+Update the param from `link` to `native` if you want to pay native Aptos token (APT) for CCIP fee. 
 
-2. Run the following command to create a resource account and publish the module:
+```shell
+npx ts-node scripts/evm2aptos/ccipSendMsgRouter.ts --feeToken native --sourceChain fuji --aptosReceiver <your resource account address> --msgString "Hello Aptos from EVM"
+```
 
-    ```shell
-    npx ts-node scripts/deploy/aptos/createResourceAccountAndPublishReceiver.ts
-    ```
+On Aptos, you can check the received message string by searching for your resource account address in the [Aptos Testnet Explorer](https://explorer.aptoslabs.com/?network=testnet). In the `Transactions` tab, look for the latest transaction with the `offramp::execute` function call. Click on the transaction to view its details, then navigate to the `Events` tab. You will find an event with the `Type` as `<your resource account address>::ccip_message_receiver::ReceivedMessage` and `Data` as `{ "message": <your message string> }`. The structure of the event will look like this:
 
-    The command will create a new resource account and publish the `ccip_message_receiver` module to it. The resource account is used to handle tokens received from EVM chains, allowing the module to generate a signer for its own address on-chain, which is required to authorize the withdrawal or transfer of those assets.
-
-3. Now, you can copy the resource account address from the output of the previous command as you need to use that as the value of `--aptosReceiver` parameter in the next step.
-
-4. Send an arbitrary data to the receiver using link token as fee token for ccip.
-
-    ```shell
-    npx ts-node scripts/evm2aptos/ccipSendMsgRouter.ts --feeToken link --sourceChain fuji --aptosReceiver <your resource account address> --msgString "Hello Aptos from EVM"
-    ```
-
-    Update the param from `link` to `native` if you want to pay native Aptos token (APT) for CCIP fee. 
-
-    ```shell
-    npx ts-node scripts/evm2aptos/ccipSendMsgRouter.ts --feeToken native --sourceChain fuji --aptosReceiver <your resource account address> --msgString "Hello Aptos from EVM"
-    ```
-
-    On Aptos, you can check the received message string by searching for your resource account address in the [Aptos Testnet Explorer](https://explorer.aptoslabs.com/?network=testnet). In the `Transactions` tab, look for the latest transaction with the `offramp::execute` function call. Click on the transaction to view its details, then navigate to the `Events` tab. You will find an event with the `Type` as `<your resource account address>::ccip_message_receiver::ReceivedMessage` and `Data` as `{ "message": <your message string> }`. The structure of the event will look like this:
-
-    ```text
-    Account Address: 0xa20dd.........59aa
-    Creation Number: 2
-    Sequence Number: 0
-    Type: 0xa20dd.........59aa::ccip_message_receiver::ReceivedMessage
-    Data: {
-      message: "Hello Aptos from EVM"
-    }
-    ```
+```text
+Account Address: 0xa20dd.........59aa
+Creation Number: 2
+Sequence Number: 0
+Type: 0xa20dd.........59aa::ccip_message_receiver::ReceivedMessage
+Data: {
+    message: "Hello Aptos from EVM"
+}
+```
 
 ### Send BnM tokens and arbitrary data using Router contract
 
