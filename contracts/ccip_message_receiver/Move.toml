@@ -6,11 +6,11 @@ authors = []
 [addresses]
 receiver = "_"
 deployer = "_"
-ccip = "0xbf9c97104a501e238a10ef1180386d4c030dbd9834a557cfcb016e85d929fdaf"
-mcms = "0x5766a70250989316dfa20858bba1c6a930226803a2162247a432a7d8e0e81a45"
+ccip = "0xc748085bd02022a9696dfa2058774f92a07401208bbd34cfd0c6d0ac0287ee45"
+mcms = "0xbdf1b9aacb4e21bf6f255105831df0172e911d4748e488196fde10d2e2a4e32d"
 mcms_register_entrypoints = "0x0"
-ccip_onramp = "0xbf9c97104a501e238a10ef1180386d4c030dbd9834a557cfcb016e85d929fdaf"
-ccip_router = "0xbf9c97104a501e238a10ef1180386d4c030dbd9834a557cfcb016e85d929fdaf"
+ccip_onramp = "0xc748085bd02022a9696dfa2058774f92a07401208bbd34cfd0c6d0ac0287ee45"
+ccip_router = "0xc748085bd02022a9696dfa2058774f92a07401208bbd34cfd0c6d0ac0287ee45"
 
 [dev-addresses]
 receiver = "0x11"

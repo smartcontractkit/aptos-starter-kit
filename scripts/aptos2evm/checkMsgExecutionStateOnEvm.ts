@@ -26,10 +26,13 @@ const argv = yargs(hideBin(process.argv))
 
 
 let destChainRpcUrl: string | undefined;
+let ccipOfframpAddress: string | undefined;
 if (argv.destChain === networkConfig.sepolia.networkName) {
     destChainRpcUrl = process.env.ETHEREUM_SEPOLIA_RPC_URL;
+    ccipOfframpAddress = networkConfig.sepolia.ccipOfframpAddress;
 } else if (argv.destChain === networkConfig.avalancheFuji.networkName) {
     destChainRpcUrl = process.env.AVALANCHE_FUJI_RPC_URL;
+    ccipOfframpAddress = networkConfig.avalancheFuji.ccipOfframpAddress;
 } else {
     throw new Error("Invalid destination chain specified. Please specify --destChain sepolia or --destChain fuji.");
 }
@@ -56,7 +59,7 @@ async function findExecutionStateChangeByMessageId() {
     const latestBlock = await provider.getBlockNumber();
 
     const logs = await provider.getLogs({
-        address: networkConfig.avalancheFuji.ccipOfframpAddress,
+        address: ccipOfframpAddress,
         fromBlock: latestBlock - 499, // Using a range of 500 blocks considering the RPC limits
         toBlock: latestBlock,
         topics: [eventTopic],
