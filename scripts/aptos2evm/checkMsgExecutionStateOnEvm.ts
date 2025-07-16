@@ -48,11 +48,6 @@ enum MessageExecutionState {
 }
 
 async function findExecutionStateChangeByMessageId() {
-    // set up the Aptos client
-    const aptosConfig = new AptosConfig({ network: Network.TESTNET });
-    const aptos = new Aptos(aptosConfig);
-
-
     // check the status on evm based on the messageId
     const iface = new ethers.Interface(OffRamp_1_6_ABI);
     const eventTopic = iface.getEvent("ExecutionStateChanged")!.topicHash;
