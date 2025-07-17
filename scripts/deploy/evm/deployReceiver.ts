@@ -21,10 +21,17 @@ const argv = yargs(hideBin(process.argv))
   .parseSync();
 
 let rpcUrl: string | undefined;
+let routerAddr: string | undefined; 
+let linkTokenAddr: string | undefined;
+
 if (argv.evmChain === networkConfig.sepolia.networkName) {
   rpcUrl = process.env.ETHEREUM_SEPOLIA_RPC_URL;
+  routerAddr = networkConfig.sepolia.ccipRouterAddress;
+  linkTokenAddr = networkConfig.sepolia.linkTokenAddress;
 } else if (argv.evmChain === networkConfig.avalancheFuji.networkName) {
   rpcUrl = process.env.AVALANCHE_FUJI_RPC_URL;
+  routerAddr = networkConfig.avalancheFuji.ccipRouterAddress;
+  linkTokenAddr = networkConfig.avalancheFuji.linkTokenAddress;
 }
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY
@@ -53,8 +60,8 @@ async function deployReceiverOnEvm() {
     console.log(`Deploying Receiver Contract to ${argv.evmChain}...`);
     const gasPrice = (await provider.getFeeData()).gasPrice;
     const contract = await factory.deploy(
-      networkConfig.avalancheFuji.ccipRouterAddress,
-      networkConfig.avalancheFuji.linkTokenAddress,
+      routerAddr,
+      linkTokenAddr,
       {
         gasPrice: gasPrice ? gasPrice : ethers.parseUnits("25", "gwei"),
         gasLimit: 3000000,

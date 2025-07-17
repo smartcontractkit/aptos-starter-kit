@@ -196,7 +196,7 @@ npx ts-node scripts/withdrawTokensFromReceiver.ts --network fuji --receiver <you
     > Source code of the Receiver contract can be found inside the [`Receiver.sol`](scripts/aptos2evm/receiver/Receiver.sol) file.
 
     ```shell
-    npx ts-node scripts/deploy/evm/deployReceiver.ts 
+    npx ts-node scripts/deploy/evm/deployReceiver.ts --evmChain fuji
     ```
 
 2. You can copy the deployed contract address from the output of the previous command as you need to use that as the value of `--evmReceiver` parameter in the next step.
