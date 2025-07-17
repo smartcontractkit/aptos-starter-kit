@@ -127,50 +127,34 @@ Note down the address of the resource account at which the `ccip_message_receive
 
 ## Use CCIP to send token and messages from Aptos to EVM
 
-> **Note**: In the examples below, Aptos Testnet is used as the source chain (Aptos), and Avalanche Fuji is used as the destination chain (EVM).
+> **Note**: In the examples below, Aptos Testnet is used as the source chain (Aptos), and Ethereum Sepolia is used as the destination chain (EVM).
 
 ### Send BnM tokens using `ccip_router::router` module
 
 Make sure you have BnM and fee tokens in your account.
 
-#### LINK Tokens on Aptos
-
-When using LINK tokens to pay for CCIP fees, you will need LINK tokens on Aptos Testnet. You can run the `dripLinkToken.ts` script by running the following command from your terminal:
-
-```shell
-npx ts-node scripts/faucets/aptos/dripLinkToken.ts --to <YOUR_APTOS_WALLET_ADDRESS>
-```
-
-You'll receive 1 LINK token in your specified Aptos wallet address.
-
 #### BnM Tokens on Aptos
 
-To obtain CCIP-BnM tokens on Aptos Testnet, you can run the `dripCCIPBnMToken.ts` script by running the following command from your terminal:
+To obtain CCIP-BnM tokens on Aptos Testnet, you can bridge BnM tokens from Ethereum Sepolia to your Aptos Testnet account by following the detailed instructions in the [Token Transfers Tutorial](https://docs.chain.link/ccip/tutorials/aptos/destination/token-transfers).
+
+#### Transfer tokens from Aptos Testnet to Ethereum Sepolia
+
+Transfer tokens from Aptos Testnet to Ethereum Sepolia by directly interacting with the `ccip_router::router` module.
 
 ```shell
-npx ts-node scripts/faucets/aptos/dripCCIPBnMToken.ts --to <YOUR_APTOS_WALLET_ADDRESS>
-```
-
-You will receive 1 CCIP-BnM token in your specified Aptos wallet address.
-
-#### Transfer tokens from Aptos Testnet to Avalanche Fuji
-
-Transfer tokens from Aptos Testnet to Avalanche Fuji by directly interacting with the `ccip_router::router` module.
-
-```shell
-npx ts-node scripts/aptos2evm/ccipSendTokenRouter.ts --feeToken link --destChain fuji --amount 0.1 --evmReceiver <your eoa / reciever contract address on fuji>
+npx ts-node scripts/aptos2evm/ccipSendTokenRouter.ts --feeToken link --destChain sepolia --amount 0.1 --evmReceiver <your eoa / reciever contract address on sepolia>
 ``` 
 
 Update the param from `link` to `native` if you want to pay native Aptos token (APT) for CCIP fee. 
 
 ```shell
-npx ts-node scripts/aptos2evm/ccipSendTokenRouter.ts --feeToken native --destChain fuji --amount 0.1 --evmReceiver <your eoa / reciever contract address on fuji>
+npx ts-node scripts/aptos2evm/ccipSendTokenRouter.ts --feeToken native --destChain sepolia --amount 0.1 --evmReceiver <your eoa / reciever contract address on sepolia>
 ``` 
 
 ### Check the CCIP message status on EVM chain
 
 ```shell
-npx ts-node scripts/aptos2evm/checkMsgExecutionStateOnEvm.ts --msgId <your ccip message id> --destChain fuji
+npx ts-node scripts/aptos2evm/checkMsgExecutionStateOnEvm.ts --msgId <your ccip message id> --destChain sepolia
 ```
 
 > **Note**: Since end-to-end transaction time depends primarily on the time to finality on the source blockchain (Aptos Testnet in this case), it's recommended to wait  20-30 seconds before running the script. For more details, refer to the [Finality by Blockchain](https://docs.chain.link/ccip/ccip-execution-latency#finality-by-blockchain) section in the CCIP documentation.
@@ -183,20 +167,20 @@ No ExecutionStateChanged event found in within the last 500 blocks
 
 ### Withdraw tokens from the Receiver contract
 
-If you have sent tokens to a Receiver contract on Avalanche Fuji, you can withdraw the tokens from the Receiver contract to your EVM address by running the following command:
+If you have sent tokens to a Receiver contract on Ethereum Sepolia, you can withdraw the tokens from the Receiver contract to your EVM address by running the following command:
 
 ```shell
-npx ts-node scripts/withdrawTokensFromReceiver.ts --network fuji --receiver <your receiver contract address on fuji> --to <your eoa address on fuji> --tokenAddress <token address on fuji>
+npx ts-node scripts/withdrawTokensFromReceiver.ts --network sepolia --receiver <your receiver contract address on sepolia> --to <your eoa address on sepolia> --tokenAddress <token address on sepolia>
 ```
 
 ### Send arbitrary data using `ccip_router::router` module
 
-1. Deploy the Receiver contract on Avalanche Fuji. 
+1. Deploy the Receiver contract on Ethereum Sepolia. 
 
     > Source code of the Receiver contract can be found inside the [`Receiver.sol`](scripts/aptos2evm/receiver/Receiver.sol) file.
 
     ```shell
-    npx ts-node scripts/deploy/evm/deployReceiver.ts --evmChain fuji
+    npx ts-node scripts/deploy/evm/deployReceiver.ts --evmChain sepolia
     ```
 
 2. You can copy the deployed contract address from the output of the previous command as you need to use that as the value of `--evmReceiver` parameter in the next step.
@@ -204,79 +188,79 @@ npx ts-node scripts/withdrawTokensFromReceiver.ts --network fuji --receiver <you
 3. Send arbitrary data to the receiver using LINK token as the fee token for CCIP.
 
     ```shell
-    npx ts-node scripts/aptos2evm/ccipSendMsgRouter.ts --feeToken link --destChain fuji --msgString "Hello EVM from Aptos" --evmReceiver <your receiver contract address on fuji>
+    npx ts-node scripts/aptos2evm/ccipSendMsgRouter.ts --feeToken link --destChain sepolia --msgString "Hello EVM from Aptos" --evmReceiver <your receiver contract address on sepolia>
     ```
 
     Update the param from `link` to `native` if you want to pay native Aptos token (APT) for CCIP fee. 
 
     ```shell
-    npx ts-node scripts/aptos2evm/ccipSendMsgRouter.ts --feeToken native --destChain fuji --msgString "Hello EVM from Aptos" --evmReceiver <your receiver contract address on fuji>
+    npx ts-node scripts/aptos2evm/ccipSendMsgRouter.ts --feeToken native --destChain sepolia --msgString "Hello EVM from Aptos" --evmReceiver <your receiver contract address on sepolia>
     ```
 
 ### Send BnM tokens and arbitrary data using `ccip_router::router` module
 
 ```shell
-npx ts-node scripts/aptos2evm/ccipSendMsgAndTokenRouter.ts --feeToken link --destChain fuji --amount 0.1 --msgString "Hello EVM from Aptos" --evmReceiver <your receiver contract address on fuji>
+npx ts-node scripts/aptos2evm/ccipSendMsgAndTokenRouter.ts --feeToken link --destChain sepolia --amount 0.1 --msgString "Hello EVM from Aptos" --evmReceiver <your receiver contract address on sepolia>
 ```
 
 Update the param from `link` to `native` if you want to pay native Aptos token (APT) for CCIP fee. 
 
 ```shell
-npx ts-node scripts/aptos2evm/ccipSendMsgAndTokenRouter.ts --feeToken native --destChain fuji --amount 0.1 --msgString "Hello EVM from Aptos" --evmReceiver <your receiver contract address on fuji>
+npx ts-node scripts/aptos2evm/ccipSendMsgAndTokenRouter.ts --feeToken native --destChain sepolia --amount 0.1 --msgString "Hello EVM from Aptos" --evmReceiver <your receiver contract address on sepolia>
 ```
 
 ### Send BnM tokens using `ccip_message_sender` module
 
 1. Now, you need to use the `ccip_message_sender` module that you published in the previous steps.
 
-2. Send BnM tokens from Aptos Testnet to Avalanche Fuji.
+2. Send BnM tokens from Aptos Testnet to Ethereum Sepolia.
 
     ```shell
-    npx ts-node scripts/aptos2evm/ccipSendToken.ts --feeToken link --destChain fuji --amount 0.1 --aptosSender <your ccip_message_sender module address> --evmReceiver <your eoa / receiver contract address on fuji>
+    npx ts-node scripts/aptos2evm/ccipSendToken.ts --feeToken link --destChain sepolia --amount 0.1 --aptosSender <your ccip_message_sender module address> --evmReceiver <your eoa / receiver contract address on sepolia>
     ``` 
 
     Update the param from `link` to `native` if you want to pay native Aptos token (APT) for CCIP fee. 
 
     ```shell
-    npx ts-node scripts/aptos2evm/ccipSendToken.ts --feeToken native --destChain fuji --amount 0.1 --aptosSender <your ccip_message_sender module address> --evmReceiver <your eoa / receiver contract address on fuji>
+    npx ts-node scripts/aptos2evm/ccipSendToken.ts --feeToken native --destChain sepolia --amount 0.1 --aptosSender <your ccip_message_sender module address> --evmReceiver <your eoa / receiver contract address on sepolia>
     ``` 
 
 ### Send arbitraty data using `ccip_message_sender` module
 
 1. Now, you need to use the `ccip_message_sender` module and the `receiver` contract that you published and deployed in the previous steps.
 
-2. Send arbitraty data from Aptos Testnet to Avalanche Fuji.
+2. Send arbitraty data from Aptos Testnet to Ethereum Sepolia.
 
     ```shell
-    npx ts-node scripts/aptos2evm/ccipSendMsg.ts --feeToken link --destChain fuji --msgString "Hello EVM from Aptos" --aptosSender <your ccip_message_sender module address> --evmReceiver <your receiver contract address on fuji>
+    npx ts-node scripts/aptos2evm/ccipSendMsg.ts --feeToken link --destChain sepolia --msgString "Hello EVM from Aptos" --aptosSender <your ccip_message_sender module address> --evmReceiver <your receiver contract address on sepolia>
     ``` 
 
     Update the param from `link` to `native` if you want to pay native Aptos token (APT) for CCIP fee. 
 
     ```shell
-    npx ts-node scripts/aptos2evm/ccipSendMsg.ts --feeToken native --destChain fuji
+    npx ts-node scripts/aptos2evm/ccipSendMsg.ts --feeToken native --destChain sepolia --msgString "Hello EVM from Aptos" --aptosSender <your ccip_message_sender module address> --evmReceiver <your receiver contract address on sepolia>
     ``` 
 
 ### Send BnM tokens and arbitraty data using `ccip_message_sender` module
 
 1. Now, you need to use the `ccip_message_sender` module and the `receiver` contract that you published and deployed in the previous steps.
 
-2. Send BnM tokens and arbitraty data from Aptos Testnet to Avalanche Fuji.
+2. Send BnM tokens and arbitraty data from Aptos Testnet to Ethereum Sepolia.
 
     ```shell
-    npx ts-node scripts/aptos2evm/ccipSendMsgAndToken.ts --feeToken link --destChain fuji --amount 0.1 --msgString "Hello EVM from Aptos" --aptosSender <your ccip_message_sender module address> --evmReceiver <your receiver contract address on fuji>
+    npx ts-node scripts/aptos2evm/ccipSendMsgAndToken.ts --feeToken link --destChain sepolia --amount 0.1 --msgString "Hello EVM from Aptos" --aptosSender <your ccip_message_sender module address> --evmReceiver <your receiver contract address on sepolia>
     ``` 
 
     Update the param from `link` to `native` if you want to pay native Aptos token (APT) for CCIP fee. 
 
     ```shell
-    npx ts-node scripts/aptos2evm/ccipSendMsgAndToken.ts --feeToken native --destChain fuji --amount 0.1 --msgString "Hello EVM from Aptos" --aptosSender <your ccip_message_sender module address> --evmReceiver <your receiver contract address on fuji>
+    npx ts-node scripts/aptos2evm/ccipSendMsgAndToken.ts --feeToken native --destChain sepolia --amount 0.1 --msgString "Hello EVM from Aptos" --aptosSender <your ccip_message_sender module address> --evmReceiver <your receiver contract address on sepolia>
     ``` 
 
 
 ## Use CCIP to send token and messages from EVM to Aptos
 
-> **Note**: In the examples below, Avalanche Fuji is used as the source chain (EVM), and Aptos Testnet is used as the destination chain (Aptos).
+> **Note**: In the examples below, Ethereum Sepolia is used as the source chain (EVM), and Aptos Testnet is used as the destination chain (Aptos).
 
 ### Send BnM tokens using Router contract
 
@@ -284,31 +268,29 @@ Make sure you have BnM and fee tokens in your account.
 
 #### LINK Tokens on EVM Chains
 
-When using LINK tokens to pay for CCIP fees, you will need LINK tokens on Avalanche Fuji. You can use the [Chainlink Faucet](https://faucet.chain.link) to get test LINK tokens.
+When using LINK tokens to pay for CCIP fees, you will need LINK tokens on Ethereum Sepolia. You can use the [Chainlink Faucet](https://faucet.chain.link) to get test LINK tokens.
 
 #### BnM Tokens on EVM Chains
 
-To obtain CCIP-BnM tokens on Avalanche Fuji, you can use the [Mint tokens in the documentation](https://docs.chain.link/ccip/test-tokens#mint-tokens-in-the-documentation) section to get test BnM tokens.
+To obtain CCIP-BnM tokens on Ethereum Sepolia, you can use the [Mint tokens in the documentation](https://docs.chain.link/ccip/test-tokens#mint-tokens-in-the-documentation) section to get test BnM tokens.
 
-#### Transfer tokens from Avalanche Fuji to Aptos Testnet
+#### Transfer tokens from Ethereum Sepolia to Aptos Testnet
 
-Transfer tokens from Avalanche Fuji to Aptos Testnet by directly interacting with the `Router` contract.
+Transfer tokens from Ethereum Sepolia to Aptos Testnet by directly interacting with the `Router` contract.
 
 ```shell
-npx ts-node scripts/evm2aptos/ccipSendTokenRouter.ts --feeToken link --sourceChain fuji --amount 0.1 --aptosReceiver <your aptos account/resource account address>
+npx ts-node scripts/evm2aptos/ccipSendTokenRouter.ts --feeToken link --sourceChain sepolia --amount 0.1 --aptosReceiver <your aptos account/resource account address>
 ``` 
 
 Update the param from `link` to `native` if you want to pay native Aptos token (APT) for CCIP fee. 
 
 ```shell
-npx ts-node scripts/evm2aptos/ccipSendTokenRouter.ts --feeToken native --sourceChain fuji --amount 0.1 --aptosReceiver <your aptos account/resource account address>
+npx ts-node scripts/evm2aptos/ccipSendTokenRouter.ts --feeToken native --sourceChain sepolia --amount 0.1 --aptosReceiver <your aptos account/resource account address>
 ``` 
 
 ### Check the CCIP message status on Aptos Testnet
 
-> **NOTE**: Since end-to-end transaction time depends primarily on the time to finality on the source blockchain (Avalanche Fuji
-  in this case), it's recommended to wait 1-2 minutes before running the script. For more details, refer to the
-  [Finality by Blockchain](https://docs.chain.link/ccip/ccip-execution-latency#finality-by-blockchain).
+> **NOTE**: Since end-to-end transaction time depends primarily on the time to finality on the source blockchain (Ethereum Sepolia in this case), it's recommended to wait 1-2 minutes before running the script. For more details, refer to the [Finality by Blockchain](https://docs.chain.link/ccip/ccip-execution-latency#finality-by-blockchain).
 
 Run the following command command to check the status of the CCIP message on Aptos Testnet:
 
@@ -331,16 +313,24 @@ npx ts-node scripts/withdrawTokensFromReceiver.ts --network aptosTestnet --recei
 Send an arbitrary data to the receiver using link token as fee token for ccip.
 
 ```shell
-npx ts-node scripts/evm2aptos/ccipSendMsgRouter.ts --feeToken link --sourceChain fuji --aptosReceiver <your resource account address> --msgString "Hello Aptos from EVM"
+npx ts-node scripts/evm2aptos/ccipSendMsgRouter.ts --feeToken link --sourceChain sepolia --aptosReceiver <your resource account address> --msgString "Hello Aptos from EVM"
 ```
 
 Update the param from `link` to `native` if you want to pay native Aptos token (APT) for CCIP fee. 
 
 ```shell
-npx ts-node scripts/evm2aptos/ccipSendMsgRouter.ts --feeToken native --sourceChain fuji --aptosReceiver <your resource account address> --msgString "Hello Aptos from EVM"
+npx ts-node scripts/evm2aptos/ccipSendMsgRouter.ts --feeToken native --sourceChain sepolia --aptosReceiver <your resource account address> --msgString "Hello Aptos from EVM"
 ```
 
-On Aptos, you can check the received message string by searching for your resource account address in the [Aptos Testnet Explorer](https://explorer.aptoslabs.com/?network=testnet). In the `Transactions` tab, look for the latest transaction with the `offramp::execute` function call. Click on the transaction to view its details, then navigate to the `Events` tab. You will find an event with the `Type` as `<your resource account address>::ccip_message_receiver::ReceivedMessage` and `Data` as `{ "message": <your message string> }`. The structure of the event will look like this:
+### Check the latest message received on Aptos
+
+Run the following command to check the latest message received on Aptos:
+
+```shell
+npx ts-node scripts/evm2aptos/getLatestMessageOnAptos.ts --aptosReceiver <your resource account address>
+```
+
+> **Manually checking the latest message**: To manually check the latest message received on Aptos, search for your resource account address in the [Aptos Testnet Explorer](https://explorer.aptoslabs.com/?network=testnet). In the `Transactions` tab, find the latest transaction with the `offramp::execute` function call. Click on the transaction to view its details, then navigate to the `Events` tab. You will see an event with the `Type` as `<your resource account address>::ccip_message_receiver::ReceivedMessage` and `Data` as `{ "message": <your message string> }`. The structure of the event will look like this:
 
 ```text
 Account Address: 0xa20dd.........59aa
@@ -359,13 +349,13 @@ In this case, the BnM tokens and arbitrary data are sent to the same receiver mo
 Run the following command:
 
 ```shell
-npx ts-node scripts/evm2aptos/ccipTokenForwarder.ts --feeToken link --sourceChain fuji --aptosReceiver <your resource account address> --aptosAccount <your another aptos account / final recipient of the token> --amount 0.1 
+npx ts-node scripts/evm2aptos/ccipTokenForwarder.ts --feeToken link --sourceChain sepolia --aptosReceiver <your resource account address> --aptosAccount <your another aptos account / final recipient of the token> --amount 0.1 
 ```
 
 Update the param from `link` to `native` if you want to pay native Aptos token (APT) for CCIP fee. 
 
 ```shell
-npx ts-node scripts/evm2aptos/ccipTokenForwarder.ts --feeToken native --sourceChain fuji --aptosReceiver <your resource account address> --aptosAccount <your another aptos account / final recipient of the token> --amount 0.1 
+npx ts-node scripts/evm2aptos/ccipTokenForwarder.ts --feeToken native --sourceChain sepolia --aptosReceiver <your resource account address> --aptosAccount <your another aptos account / final recipient of the token> --amount 0.1 
 ```
 
 > To check the emitted event, search for your resource account address in the [Aptos Testnet Explorer](https://explorer.aptoslabs.com/?network=testnet). In the `Transactions` tab, find the latest transaction with the `offramp::execute` function call. Click on the transaction to view its details, then navigate to the `Events` tab. You will see an event with the `Type` as `<your resource account address>::ccip_message_receiver::ForwardedTokens` and `Data` as `{ "final_recipient": <your another aptos account / final recipient of the token> }`. The structure of the event will look like this:
