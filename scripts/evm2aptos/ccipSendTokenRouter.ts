@@ -101,10 +101,20 @@ function buildCCIPMessage(
     ];
 }
 
-function encodeExtraArgsV2(gasLimit: bigint, strict: boolean): string {
+// function encodeExtraArgsV2(gasLimit: bigint, strict: boolean): string {
+//     const abiCoder = ethers.AbiCoder.defaultAbiCoder();
+
+//     const encodedArgs = abiCoder.encode(["tuple(uint256 gasLimit, bool strict)"], [[gasLimit, strict]]);
+
+//     const GENERIC_EXTRA_ARGS_V2_TAG = "0x181dcf10";
+
+//     return ethers.concat([GENERIC_EXTRA_ARGS_V2_TAG, encodedArgs]);
+// }
+
+function encodeExtraArgsV2(gasLimit: bigint, allowOutOfOrderExecution: boolean): string {
     const abiCoder = ethers.AbiCoder.defaultAbiCoder();
 
-    const encodedArgs = abiCoder.encode(["tuple(uint256 gasLimit, bool strict)"], [[gasLimit, strict]]);
+    const encodedArgs = abiCoder.encode(["tuple(uint256 gasLimit, bool allowOutOfOrderExecution)"], [[gasLimit, allowOutOfOrderExecution]]);
 
     const GENERIC_EXTRA_ARGS_V2_TAG = "0x181dcf10";
 
@@ -125,6 +135,7 @@ async function extractCCIPMessageId(
                 const messageId: string = message.header.messageId;
 
                 console.log("🆔 CCIP Message ID:", messageId);
+                console.log(`🔗 CCIP Explorer URL: https://ccip.chain.link/#/side-drawer/msg/${messageId}`);
                 return messageId;
             }
         } catch {

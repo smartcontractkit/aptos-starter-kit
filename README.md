@@ -6,10 +6,12 @@
 
 1. Install [Aptos CLI](https://aptos.dev/en/build/cli)
 
+    > **NOTE**: If you have an existing installation of the Aptos CLI, make sure to update it to the latest version to avoid compatibility issues.
+
 2. Clone the repo:
 
     ```shell
-    git clone https://github.com/smartcontractkit/aptos-starter-kit.git &
+    git clone https://github.com/smartcontractkit/aptos-starter-kit.git
     ```
     
 3. Navigate to the directory:
@@ -152,6 +154,16 @@ npx ts-node scripts/aptos2evm/ccipSendTokenRouter.ts --feeToken native --destCha
 ``` 
 
 ### Check the CCIP message status on EVM chain
+
+#### Use the CCIP Explorer to check the message status
+
+Use the CCIP Explorer URL provided in the output to track your message status across chains. The explorer gives an overview of the entire cross-chain transaction life cycle.
+
+```text
+🔗 CCIP Explorer URL: https://ccip.chain.link/#/side-drawer/msg/<your ccip message id>
+```
+
+#### Programmatically check the message status
 
 ```shell
 npx ts-node scripts/aptos2evm/checkMsgExecutionStateOnEvm.ts --msgId <your ccip message id> --destChain sepolia

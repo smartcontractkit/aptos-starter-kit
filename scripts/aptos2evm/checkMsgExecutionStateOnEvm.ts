@@ -3,7 +3,6 @@ import OffRamp_1_6_ABI from "../config/abi/OffRamp_1_6";
 import { networkConfig } from "../../helper-config";
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
 
 import * as dotenv from "dotenv";
 dotenv.config();

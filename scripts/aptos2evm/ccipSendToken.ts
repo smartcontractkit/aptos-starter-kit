@@ -1,10 +1,9 @@
-import { Account, Aptos, AptosConfig, Ed25519PrivateKey, Network, MoveVector, Hex, Serializer } from "@aptos-labs/ts-sdk";
+import { Account, Aptos, AptosConfig, Ed25519PrivateKey, Network, MoveVector, Hex } from "@aptos-labs/ts-sdk";
 import * as dotenv from 'dotenv';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { networkConfig } from "../../helper-config";
 import { parseAmountToU64Decimals, fetchEventsByTxHash } from "./utils";
-import { ar } from "@aptos-labs/ts-sdk/dist/common/accountAddress-AL8HRxQC";
 
 dotenv.config();
 
@@ -149,7 +148,9 @@ async function sendTokenFromAptosToEvm(tokenAmount: number) {
     }
 
     const messageId = await fetchEventsByTxHash(executed.hash, aptos);
-    console.log(`Transaction submitted successfully. Please check transaction at https://explorer.aptoslabs.com/txn/${executed.hash}?network=testnet \nMessage Id is ${messageId}`);
+    console.log(`✅ Transaction successful: https://explorer.aptoslabs.com/txn/${executed.hash}?network=testnet`);
+    console.log(`🆔 CCIP Message ID: ${messageId}`);
+    console.log(`🔗 CCIP Explorer URL: https://ccip.chain.link/#/side-drawer/msg/${messageId}`);
 }
 
 sendTokenFromAptosToEvm(argv.amount);

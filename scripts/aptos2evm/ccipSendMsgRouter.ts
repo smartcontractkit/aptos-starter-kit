@@ -6,7 +6,6 @@ import { networkConfig } from "../../helper-config";
 import { encodeGenericExtraArgsV2 } from "./utils";
 import { ethers } from "ethers";
 import { fetchEventsByTxHash } from "./utils";
-import { a, ar } from "@aptos-labs/ts-sdk/dist/common/accountAddress-AL8HRxQC";
 
 dotenv.config();
 
@@ -154,7 +153,9 @@ async function sendMessageFromAptosToEvm() {
 
     const messageId = await fetchEventsByTxHash(executed.hash, aptos);
 
-    console.log(`Transaction submitted successfully. Please check transaction at https://explorer.aptoslabs.com/txn/${executed.hash}?network=testnet \nMessage Id is ${messageId}`);
+    console.log(`✅ Transaction successful: https://explorer.aptoslabs.com/txn/${executed.hash}?network=testnet`);
+    console.log(`🆔 CCIP Message ID: ${messageId}`);
+    console.log(`🔗 CCIP Explorer URL: https://ccip.chain.link/#/side-drawer/msg/${messageId}`);
 }
 
 sendMessageFromAptosToEvm()

@@ -70,9 +70,9 @@ async function deployReceiverOnEvm() {
 
     await contract.waitForDeployment();
     const contractAddress = await contract.getAddress();
-    console.log(`receiver contract is deployed to: ${contractAddress}`);
+    console.log(`Receiver contract is deployed to: ${contractAddress}`);
   } catch (error) {
-    console.error("部署失败:", error);
+    console.error("Deployment failed:", error);
     throw error;
   }
 }

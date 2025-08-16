@@ -35,7 +35,7 @@ async function getModuleEvents() {
         }
 
         else {
-            console.log(`Latest message received on Aptos by ${argv.aptosReceiver}: ${events[0].data.message}`);
+            console.log(`Latest message received on Aptos at ${argv.aptosReceiver}: ${events[0].data.message}`);
         }
     } catch (error) {
         console.error("Error fetching module events:", error);

@@ -5,7 +5,6 @@ import { hideBin } from 'yargs/helpers';
 import { networkConfig } from "../../helper-config";
 import { ethers } from "ethers";
 import { fetchEventsByTxHash } from "./utils";
-import { argv0 } from "process";
 
 dotenv.config();
 
@@ -149,7 +148,9 @@ async function sendMsgFromAptosToEvm() {
 
     const messageId = await fetchEventsByTxHash(executed.hash, aptos);
 
-    console.log(`Transaction submitted successfully. Please check transaction at https://explorer.aptoslabs.com/txn/${executed.hash}?network=testnet \nMessage Id is ${messageId}`);
+    console.log(`✅ Transaction successful: https://explorer.aptoslabs.com/txn/${executed.hash}?network=testnet`);
+    console.log(`🆔 CCIP Message ID: ${messageId}`);
+    console.log(`🔗 CCIP Explorer URL: https://ccip.chain.link/#/side-drawer/msg/${messageId}`);
 }
 
 sendMsgFromAptosToEvm()
