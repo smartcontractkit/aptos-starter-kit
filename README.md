@@ -36,7 +36,7 @@
 
     Verify your current configuration with:
 
-    ```bash
+    ```shell
     aptos config show-profiles
     ```
 
@@ -139,7 +139,7 @@ Make sure you have BnM and fee tokens in your account.
 
 To acquire CCIP-BnM tokens on the Aptos Testnet, execute the following command:
 
-```bash
+```shell
 npx ts-node scripts/faucets/aptos/dripCCIPBnMToken.ts --to <your aptos account address>
 ```
 
