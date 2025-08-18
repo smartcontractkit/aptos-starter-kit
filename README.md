@@ -137,7 +137,13 @@ Make sure you have BnM and fee tokens in your account.
 
 #### BnM Tokens on Aptos
 
-To obtain CCIP-BnM tokens on Aptos Testnet, you can bridge BnM tokens from Ethereum Sepolia to your Aptos Testnet account by following the detailed instructions in the [Token Transfers Tutorial](https://docs.chain.link/ccip/tutorials/aptos/destination/token-transfers).
+To acquire CCIP-BnM tokens on the Aptos Testnet, execute the following command:
+
+```bash
+npx ts-node scripts/faucets/aptos/dripCCIPBnMToken.ts --to <your aptos account address>
+```
+
+This script, `dripCCIPBnMToken.ts`, mints 1 CCIP-BnM token to the specified Aptos account address.
 
 #### Transfer tokens from Aptos Testnet to Ethereum Sepolia
 
@@ -410,3 +416,21 @@ Data: {
     Price: 109255000000000000000000
     Timestamp: 1749642370
     ```
+
+## Upgrade the `price_feed_demo` or the `ccip_message_sender` module
+
+> **What does "upgrade" mean?**  
+> Upgrading an Aptos object module allows you to redeploy the module code to the same object address, replacing the previous version. This process updates the logic of the module while preserving the existing on-chain state and data associated with the object.
+
+Since the `price_feed_demo` and `ccip_message_sender` modules are published to objects, you can upgrade them (for example, by adding new modules or modifying existing code) using the following command:
+
+#### Upgrade the `price_feed_demo` module:
+
+```shell
+npx ts-node scripts/deploy/aptos/upgradeObjectWithNewCode.ts --objectAddress <object address having the price_feed_demo module> --packageName price_feed_demo --addressName price_feed
+```
+
+#### Upgrade the `ccip_message_sender` module:
+
+```shell
+npx ts-node scripts/deploy/aptos/upgradeObjectWithNewCode.ts --objectAddress <object address having the ccip_message_sender module> --packageName ccip_message_sender --addressName sender
