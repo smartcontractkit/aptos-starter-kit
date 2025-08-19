@@ -25,8 +25,7 @@ const argv = yargs(hideBin(process.argv))
         description: 'Specify the source chain from where the token will be sent',
         demandOption: true,
         choices: [
-            networkConfig.sepolia.networkName,
-            networkConfig.avalancheFuji.networkName
+            networkConfig.sepolia.networkName
         ]
     })
     .option('msgString', {
@@ -259,41 +258,9 @@ async function sendMessageFromEvmToAptos(messageString: string) {
             throw new Error("Invalid fee token specified. Please specify fee token use --feeToken link or --feeToken native.");
         }
 
-    } else if (argv.sourceChain === networkConfig.avalancheFuji.networkName) {
-        sourceChainRpcUrl = process.env.AVALANCHE_FUJI_RPC_URL;
-        if (!sourceChainRpcUrl) {
-            throw new Error("Please set the environment variable AVALANCHE_FUJI_RPC_URL.");
-        }
-
-        const provider = new ethers.JsonRpcProvider(sourceChainRpcUrl);
-        const wallet = new ethers.Wallet(privateKey as string, provider);
-
-        const ccipRouterContract = new ethers.Contract(
-            networkConfig.avalancheFuji.ccipRouterAddress,
-            RouterABI,
-            wallet
-        );
-
-        const ccipOnRampContract = new ethers.Contract(
-            networkConfig.avalancheFuji.ccipOnrampAddress,
-            OnRamp_1_6_ABI,
-            wallet
-        );
-
-        explorerUrl = networkConfig.avalancheFuji.explorerUrl;
-
-        if (argv.feeToken === networkConfig.aptos.feeTokenNameLink) {
-            feeTokenAddress = networkConfig.avalancheFuji.linkTokenAddress;
-            sendMessagePayLink(wallet, ccipRouterContract, ccipOnRampContract, recipient, messageString, feeTokenAddress, explorerUrl);
-        } else if (argv.feeToken === networkConfig.aptos.feeTokenNameNative) {
-            sendMessagePayNative(wallet, ccipRouterContract, ccipOnRampContract, recipient, messageString, explorerUrl);
-        }
-        else {
-            throw new Error("Invalid fee token specified. Please specify fee token use --feeToken link or --feeToken native.");
-        }
     } else {
-        throw new Error("Invalid source chain specified. Please specify --sourceChain sepolia or --sourceChain fuji.");
-    }
+        throw new Error("Invalid source chain specified. Please specify --sourceChain sepolia.");
+    }           
 }
 
 

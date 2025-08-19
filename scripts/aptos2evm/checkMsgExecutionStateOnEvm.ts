@@ -17,8 +17,7 @@ const argv = yargs(hideBin(process.argv))
         description: 'Specify the destination chain where the token will be sent',
         demandOption: true,
         choices: [
-            networkConfig.aptos.destChains.ethereumSepolia,
-            networkConfig.aptos.destChains.avalancheFuji
+            networkConfig.aptos.destChains.ethereumSepolia
         ]
     })
     .parseSync();
@@ -29,11 +28,8 @@ let ccipOfframpAddress: string | undefined;
 if (argv.destChain === networkConfig.sepolia.networkName) {
     destChainRpcUrl = process.env.ETHEREUM_SEPOLIA_RPC_URL;
     ccipOfframpAddress = networkConfig.sepolia.ccipOfframpAddress;
-} else if (argv.destChain === networkConfig.avalancheFuji.networkName) {
-    destChainRpcUrl = process.env.AVALANCHE_FUJI_RPC_URL;
-    ccipOfframpAddress = networkConfig.avalancheFuji.ccipOfframpAddress;
 } else {
-    throw new Error("Invalid destination chain specified. Please specify --destChain sepolia or --destChain fuji.");
+    throw new Error("Invalid destination chain specified. Please specify --destChain sepolia.");
 }
 
 const provider = new ethers.JsonRpcProvider(destChainRpcUrl);

@@ -14,8 +14,7 @@ const argv = yargs(hideBin(process.argv))
     description: 'Specify the EVM chain to deploy the receiver contract to',
     demandOption: true,
     choices: [
-      networkConfig.sepolia.networkName,
-      networkConfig.avalancheFuji.networkName
+      networkConfig.sepolia.networkName
     ]
   })
   .parseSync();
@@ -28,11 +27,7 @@ if (argv.evmChain === networkConfig.sepolia.networkName) {
   rpcUrl = process.env.ETHEREUM_SEPOLIA_RPC_URL;
   routerAddr = networkConfig.sepolia.ccipRouterAddress;
   linkTokenAddr = networkConfig.sepolia.linkTokenAddress;
-} else if (argv.evmChain === networkConfig.avalancheFuji.networkName) {
-  rpcUrl = process.env.AVALANCHE_FUJI_RPC_URL;
-  routerAddr = networkConfig.avalancheFuji.ccipRouterAddress;
-  linkTokenAddr = networkConfig.avalancheFuji.linkTokenAddress;
-}
+} 
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY
 

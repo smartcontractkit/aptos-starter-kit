@@ -78,9 +78,8 @@ cp .env.example .env
 Next, open the `.env` file and fill in the following values:
 
 - `PRIVATE_KEY_HEX`: The private key of your wallet (EOA) on Aptos Testnet from which you're sending CCIP-BnM tokens from Aptos to EVM. You can find this in the `.aptos/config.yaml` file created by the `aptos init --network testnet` command above.
-- `PRIVATE_KEY`: The private key of your wallet (EOA) on Avalanche Fuji from which you're sending CCIP-BnM tokens from EVM to Aptos. You can export your private key from your MetaMask Wallet, as shown in the [official MetaMask guide](https://support.metamask.io/configure/accounts/how-to-export-an-accounts-private-key/).
+- `PRIVATE_KEY`: The private key of your wallet (EOA) on Ethereum Sepolia from which you're sending CCIP-BnM tokens from EVM to Aptos. You can export your private key from your MetaMask Wallet, as shown in the [official MetaMask guide](https://support.metamask.io/configure/accounts/how-to-export-an-accounts-private-key/).
 - `ETHEREUM_SEPOLIA_RPC_URL`: The RPC endpoint for the Ethereum Sepolia testnet. You can obtain an RPC URL by signing up for a personal endpoint from [Alchemy](https://www.alchemy.com/), [Infura](https://www.infura.io/), or another node provider service.
-- `AVALANCHE_FUJI_RPC_URL`: The RPC endpoint for the Avalanche Fuji testnet. You can obtain an RPC URL by signing up for a personal endpoint from [Alchemy](https://www.alchemy.com/), [Infura](https://www.infura.io/), or another node provider service.
 
 
 ## Publish the modules on Aptos Testnet
