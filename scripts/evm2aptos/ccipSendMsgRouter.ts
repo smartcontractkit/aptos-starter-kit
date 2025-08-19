@@ -1,4 +1,4 @@
-import { ethers, Interface } from "ethers";
+import { ethers, Interface, hexlify, toUtf8Bytes } from "ethers";
 import RouterABI from '../config/abi/Router';
 import ERC20_ABI from '../config/abi/ERC20';
 import OnRamp_1_6_ABI from "../config/abi/OnRamp_1_6";
@@ -28,10 +28,10 @@ const argv = yargs(hideBin(process.argv))
             networkConfig.sepolia.networkName
         ]
     })
-    .option('amount', {
-        type: 'number',
-        description: 'Specify the amount of token to send',
-        demandOption: true,
+    .option('msgString', {
+        type: 'string',
+        description: 'Specify the message string to send',
+        demandOption: true
     })
     .option('aptosReceiver', {
         type: 'string',
@@ -43,20 +43,6 @@ const argv = yargs(hideBin(process.argv))
 const privateKey = process.env.PRIVATE_KEY;
 if (!privateKey) {
     throw new Error("Please set the environment variable PRIVATE_KEY.");
-}
-
-/**
- * Parses a human-readable token amount into the appropriate BigInt
- * based on the token's decimals.
- */
-async function parseTokenAmount(
-    tokenAddress: string,
-    amount: number,
-    provider: ethers.Provider
-): Promise<bigint> {
-    const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
-    const decimals: number = await tokenContract.decimals();
-    return ethers.parseUnits(amount.toString(), decimals);
 }
 
 async function approveToken(
@@ -86,15 +72,13 @@ async function approveToken(
 function buildCCIPMessage(
     recipient: string,
     data: string,
-    token: string,
-    amount: bigint,
     feeToken: string,
     extraArgs: string
 ): Array<any> {
     return [
         recipient,
         data,
-        [{ token, amount }],
+        [], // empty array for tokens as we're sending a message only, no tokens involved
         feeToken,
         extraArgs
     ];
@@ -137,17 +121,15 @@ async function extractCCIPMessageId(
     return null;
 }
 
-async function transferTokenPayLink(wallet: ethers.Wallet, ccipRouterContract: ethers.Contract, ccipOnRampContract: ethers.Contract, recipient: string, tokenAddress: string, tokenAmount: bigint, feeTokenAddress: string, explorerUrl: string) {
+async function sendMessagePayLink(wallet: ethers.Wallet, ccipRouterContract: ethers.Contract, ccipOnRampContract: ethers.Contract, recipient: string, messageString: string, feeTokenAddress: string, explorerUrl: string) {
 
     try {
 
         const ccipMessage = buildCCIPMessage(
             recipient,
-            "0x", // No message data
-            tokenAddress,
-            tokenAmount,
+            hexlify(toUtf8Bytes(messageString)), // test data, can be any valid hex string
             feeTokenAddress,
-            encodeExtraArgsV2(0n, true) // Gas limit set to 0 (because transferring to EOA), OoO (Out of Order) execution enabled
+            encodeExtraArgsV2(100000n, true) // Gas limit set to 200000. This is a reasonable default for most messages, OoO (Out of Order) execution enabled
         );
 
         const baseFee: bigint = await ccipRouterContract.getFee(networkConfig.aptos.chainSelector, ccipMessage);
@@ -159,13 +141,10 @@ async function transferTokenPayLink(wallet: ethers.Wallet, ccipRouterContract: e
         console.log("Base Fee (in LINK JUELS):", baseFee.toString());
         console.log("Fee with 20% buffer (in LINK JUELS):", feeWithBuffer.toString());
 
-        // Approve the token transfer
-        await approveToken(wallet, await ccipRouterContract.getAddress(), tokenAddress, tokenAmount);
-
         // Approve the LINK token for fee payment
         await approveToken(wallet, await ccipRouterContract.getAddress(), feeTokenAddress, feeWithBuffer);
 
-        console.log("Proceeding with the token transfer...");
+        console.log("Proceeding with the message transfer...");
 
         const tx = await ccipRouterContract.ccipSend(
             networkConfig.aptos.chainSelector,
@@ -190,17 +169,15 @@ async function transferTokenPayLink(wallet: ethers.Wallet, ccipRouterContract: e
 
 }
 
-async function transferTokenPayNative(wallet: ethers.Wallet, ccipRouterContract: ethers.Contract, ccipOnRampContract: ethers.Contract, recipient: string, tokenAddress: string, tokenAmount: bigint, explorerUrl: string) {
+async function sendMessagePayNative(wallet: ethers.Wallet, ccipRouterContract: ethers.Contract, ccipOnRampContract: ethers.Contract, recipient: string, messageString: string, explorerUrl: string) {
 
     try {
 
         const ccipMessage = buildCCIPMessage(
             recipient,
-            "0x", // No message data
-            tokenAddress,
-            tokenAmount,
+            hexlify(toUtf8Bytes(messageString)), // test data, can be any valid hex string
             ethers.ZeroAddress, // Fee token is set to zero address (in case of using native token as fee)
-            encodeExtraArgsV2(0n, true) // Gas limit set to 0 (because transferring to EOA), OoO (Out of Order) execution enabled
+            encodeExtraArgsV2(100000n, true) // Gas limit set to 200000. This is a reasonable default for most messages, OoO (Out of Order) execution enabled
         );
 
         const baseFee: bigint = await ccipRouterContract.getFee(networkConfig.aptos.chainSelector, ccipMessage);
@@ -212,10 +189,7 @@ async function transferTokenPayNative(wallet: ethers.Wallet, ccipRouterContract:
         console.log("Base Fee (in WEI):", baseFee.toString());
         console.log("Fee with 20% buffer (in WEI):", feeWithBuffer.toString());
 
-        // Approve the token transfer
-        await approveToken(wallet, await ccipRouterContract.getAddress(), tokenAddress, tokenAmount);
-
-        console.log("Proceeding with the token transfer...");
+        console.log("Proceeding with the message transfer...");
 
         const tx = await ccipRouterContract.ccipSend(
             networkConfig.aptos.chainSelector,
@@ -233,6 +207,7 @@ async function transferTokenPayNative(wallet: ethers.Wallet, ccipRouterContract:
         console.log("✅ Transaction successful:", `${explorerUrl}/tx/${tx.hash}`);
         await extractCCIPMessageId(ccipOnRampContract, receipt);
     } catch (error) {
+
         handleError([
             { name: "CCIPRouterInterface", iface: ccipRouterContract.interface },
             { name: "CCIPOnRampInterface", iface: ccipOnRampContract.interface },
@@ -243,12 +218,11 @@ async function transferTokenPayNative(wallet: ethers.Wallet, ccipRouterContract:
 
 }
 
-async function sendTokenFromEvmToAptos(tokenAmount: number) {
+async function sendMessageFromEvmToAptos(messageString: string) {
     // console.log(await ccipRouterContract.isChainSupported(networkConfig.aptos.chainSelector));
 
     let recipient = argv.aptosReceiver;
     let sourceChainRpcUrl: string | undefined;
-    let tokenAddress: string | undefined;
     let feeTokenAddress: string | undefined;
     let explorerUrl: string | undefined;
 
@@ -273,24 +247,20 @@ async function sendTokenFromEvmToAptos(tokenAmount: number) {
             wallet
         );
 
-        tokenAddress = networkConfig.sepolia.ccipBnMTokenAddress;
-
-        const parsedTokenAmount = await parseTokenAmount(tokenAddress, tokenAmount, wallet.provider as ethers.Provider);
-
         explorerUrl = networkConfig.sepolia.explorerUrl;
 
         if (argv.feeToken === networkConfig.aptos.feeTokenNameLink) {
             feeTokenAddress = networkConfig.sepolia.linkTokenAddress;
-            transferTokenPayLink(wallet, ccipRouterContract, ccipOnRampContract, recipient, tokenAddress, parsedTokenAmount, feeTokenAddress, explorerUrl);
+            sendMessagePayLink(wallet, ccipRouterContract, ccipOnRampContract, recipient, messageString, feeTokenAddress, explorerUrl);
         } else if (argv.feeToken === networkConfig.aptos.feeTokenNameNative) {
-            transferTokenPayNative(wallet, ccipRouterContract, ccipOnRampContract, recipient, tokenAddress, parsedTokenAmount, explorerUrl);
+            sendMessagePayNative(wallet, ccipRouterContract, ccipOnRampContract, recipient, messageString, explorerUrl);
         } else {
             throw new Error("Invalid fee token specified. Please specify fee token use --feeToken link or --feeToken native.");
         }
 
     } else {
         throw new Error("Invalid source chain specified. Please specify --sourceChain sepolia.");
-    }
+    }           
 }
 
 
@@ -350,4 +320,4 @@ async function handleError(
     }
 }
 
-sendTokenFromEvmToAptos(argv.amount);
+sendMessageFromEvmToAptos(argv.msgString);

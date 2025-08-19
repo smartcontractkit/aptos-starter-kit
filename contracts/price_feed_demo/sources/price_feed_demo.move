@@ -1,4 +1,4 @@
-module sender::price_feed_demo {
+module price_feed::price_feed_demo {
    use std::vector;
    use std::signer;
    use data_feeds::router::get_benchmarks;

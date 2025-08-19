@@ -2,7 +2,6 @@ module sender::ccip_message_sender {
     use std::vector;
     use ccip_router::router;
     use ccip::client;
-    use ccip::eth_abi;
 
     public entry fun send_message(
         caller: &signer,
