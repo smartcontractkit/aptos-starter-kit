@@ -34,16 +34,6 @@ export const networkConfig = {
         linkTokenAddress: "0x779877A7B0D9E8603169DdbD7836e478b4624789",
         explorerUrl: "https://sepolia.etherscan.io"
     },
-        avalancheFuji: {
-        networkName: "fuji",
-        chainSelector: "14767482510784806043",
-        ccipRouterAddress: "0xF694E193200268f9a4868e4Aa017A0118C9a8177",
-        ccipOfframpAddress: "0x3F1f176e347235858DD6Db905DDBA09Eaf25478a",
-        ccipOnrampAddress: "0xA5D5B0B844c8f11B61F28AC98BBA84dEA9b80953",
-        ccipBnMTokenAddress: "0xD21341536c5cF5EB1bcb58f6723cE26e8D8E90e4",
-        linkTokenAddress: "0x0b9d5D9136855f6FEc3c0993feE6E9CE8a297846",
-        explorerUrl: "https://testnet.snowtrace.io"
-    },
     arbitrumSepolia: {
         networkName: "arbitrumSepolia",
         chainSelector: "3478487238524512106",
