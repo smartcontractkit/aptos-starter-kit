@@ -1,6 +1,4 @@
-# Aptos Starter Kit
-
-> This tutorial represents an educational example to use a Chainlink system, product, or service and is provided to demonstrate how to interact with Chainlink’s systems, products, and services to integrate them into your own. This template is provided “AS IS” and “AS AVAILABLE” without warranties of any kind, it has not been audited, and it may be missing key checks or error handling to make the usage of the system, product or service more clear. Do not use the code in this example in a production environment without completing your own audits and application of best practices. Neither Chainlink Labs, the Chainlink Foundation, nor Chainlink node operators are responsible for unintended outputs that are generated due to errors in code.
+# CCIP on Aptos Starter Kit
 
 ## Prerequisites
 
@@ -32,15 +30,17 @@
     aptos init --network testnet
     ```
 
-    This command will guide you through creating a new account for Testnet and will save the credentials in a `.aptos/config.yaml` file. This also configures your Aptos CLI to use Testnet.
+    This command will guide you through creating a new account for Testnet and will save the credentials in a `.aptos/config.yaml` file in this project's root. If you don't have a private key already just hit enter and the CLI will auto generate one. This command also configures your Aptos CLI to use Testnet.
 
-    Verify your current configuration with:
+    You will be given the option to fund your account. You can do so now, or do it later as per this README.
+
+    Next, verify your current configuration with:
 
     ```shell
     aptos config show-profiles
     ```
 
-    This should show your `default` profile configured for Testnet, with the `network` set to `Testnet`.
+    This should show your `default` profile configured for Testnet, with the `network` set to `Testnet`. This information is taken from the `.aptos/config.yaml` file.
 
     **Example output:**
 
@@ -65,7 +65,18 @@
     key](https://petra.app/docs/use#import-an-existing-account), which you can find as the `private_key` value in the
     `default` profile under the `profiles` section of the `.aptos/config.yaml` file generated above.
   
-6. You can use the official [Aptos Testnet Faucet](https://aptos.dev/en/network/faucet) to get **APT** tokens. Simply enter your Aptos account address and click on **Mint** to request tokens.
+6. You can use the official [Aptos Testnet Faucet](https://aptos.dev/en/network/faucet) to get **APT** tokens. Simply enter your Aptos account address and click on **Mint** to request tokens.  Once you've minted it you can check your account balance with `aptos account balance ` which should produce output in your terminal that confirms the default number of tokens is provided:
+```
+{
+  "Result": [
+    {
+      "asset_type": "coin",
+      "coin_type": "0x1::aptos_coin::AptosCoin",
+      "balance": 100000000
+    }
+  ]
+}
+```
 
 ## Environment Configuration (`.env` file)
 
@@ -146,13 +157,13 @@ This script, `dripCCIPBnMToken.ts`, mints 1 CCIP-BnM token to the specified Apto
 
 #### Transfer tokens from Aptos Testnet to Ethereum Sepolia
 
-Transfer tokens from Aptos Testnet to Ethereum Sepolia by directly interacting with the `ccip_router::router` module.
+Transfer tokens from Aptos Testnet to Ethereum Sepolia by directly interacting with the `ccip_router::router` module.  As a quickstart you can use your EOA (wallet address) on Ethereum Sepolia. If you have [deployed a CCIP Receiver to the EVM](https://docs.chain.link/ccip/getting-started/evm#receiver-code) then you can give that address.
 
 ```shell
 npx ts-node scripts/aptos2evm/ccipSendTokenRouter.ts --feeToken link --destChain sepolia --amount 0.1 --evmReceiver <your eoa / reciever contract address on sepolia>
 ``` 
 
-Update the param from `link` to `native` if you want to pay native Aptos token (APT) for CCIP fee. 
+Update the  `--feeToken` param  from `link` to `native` if you want to pay native Aptos token (APT) for CCIP fee. 
 
 ```shell
 npx ts-node scripts/aptos2evm/ccipSendTokenRouter.ts --feeToken native --destChain sepolia --amount 0.1 --evmReceiver <your eoa / reciever contract address on sepolia>
@@ -433,3 +444,7 @@ npx ts-node scripts/deploy/aptos/upgradeObjectWithNewCode.ts --objectAddress <ob
 
 ```shell
 npx ts-node scripts/deploy/aptos/upgradeObjectWithNewCode.ts --objectAddress <object address having the ccip_message_sender module> --packageName ccip_message_sender --addressName sender
+
+
+## DISCLAIMER
+This tutorial represents an educational example to use a Chainlink system, product, or service and is provided to demonstrate how to interact with Chainlink’s systems, products, and services to integrate them into your own. This template is provided “AS IS” and “AS AVAILABLE” without warranties of any kind, it has not been audited, and it may be missing key checks or error handling to make the usage of the system, product or service more clear. Do not use the code in this example in a production environment without completing your own audits and application of best practices. Neither Chainlink Labs, the Chainlink Foundation, nor Chainlink node operators are responsible for unintended outputs that are generated due to errors in code.
