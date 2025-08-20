@@ -2,9 +2,10 @@ import { ethers } from "ethers";
 import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
-import { networkConfig } from "../../../helper-config";
+import { networkConfig, supportedSourceChains } from "../../../helper-config";
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
+import { getEvmChainConfig } from "../../utils/utils";
 
 dotenv.config();
 
@@ -13,21 +14,16 @@ const argv = yargs(hideBin(process.argv))
     type: 'string',
     description: 'Specify the EVM chain to deploy the receiver contract to',
     demandOption: true,
-    choices: [
-      networkConfig.sepolia.networkName
-    ]
+    choices: supportedSourceChains
   })
   .parseSync();
 
-let rpcUrl: string | undefined;
-let routerAddr: string | undefined; 
-let linkTokenAddr: string | undefined;
-
-if (argv.evmChain === networkConfig.sepolia.networkName) {
-  rpcUrl = process.env.ETHEREUM_SEPOLIA_RPC_URL;
-  routerAddr = networkConfig.sepolia.ccipRouterAddress;
-  linkTokenAddr = networkConfig.sepolia.linkTokenAddress;
-} 
+const chainConfig = getEvmChainConfig(argv.evmChain);
+const { ccipRouterAddress, linkTokenAddress, rpcUrlEnv } = chainConfig;
+const rpcUrl = process.env[rpcUrlEnv];
+if (!rpcUrl) {
+    throw new Error(`Please set the environment variable ${rpcUrlEnv}.`);
+}
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY
 
@@ -55,8 +51,8 @@ async function deployReceiverOnEvm() {
     console.log(`Deploying Receiver Contract to ${argv.evmChain}...`);
     const gasPrice = (await provider.getFeeData()).gasPrice;
     const contract = await factory.deploy(
-      routerAddr,
-      linkTokenAddr,
+      ccipRouterAddress,
+      linkTokenAddress,
       {
         gasPrice: gasPrice ? gasPrice : ethers.parseUnits("25", "gwei"),
         gasLimit: 3000000,

@@ -3,9 +3,10 @@ import RouterABI from '../config/abi/Router';
 import ERC20_ABI from '../config/abi/ERC20';
 import OnRamp_1_6_ABI from "../config/abi/OnRamp_1_6";
 import FeeQuoter_1_6_ABI from "../config/abi/FeeQuoter_1_6";
-import { networkConfig } from "../../helper-config";
+import { networkConfig, supportedSourceChains } from "../../helper-config";
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
+import { getEvmChainConfig } from "../utils/utils";
 
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -24,9 +25,7 @@ const argv = yargs(hideBin(process.argv))
         type: 'string',
         description: 'Specify the source chain from where the token will be sent',
         demandOption: true,
-        choices: [
-            networkConfig.sepolia.networkName
-        ]
+        choices: supportedSourceChains
     })
     .option('aptosAccount', {
         type: 'string',
@@ -254,52 +253,30 @@ tokenAmount: number - The amount of CCIP-BnM token to send
 aptosAccountAddress: string - The Aptos account address to forward the token to
 **/
 async function sendTokenFromEvmToAptos(aptosAccountAddress: string, tokenAmount: number,) {
-    // console.log(await ccipRouterContract.isChainSupported(networkConfig.aptos.chainSelector));
-
     let recipient = argv.aptosReceiver;
-    let sourceChainRpcUrl: string | undefined;
-    let tokenAddress: string | undefined;
-    let feeTokenAddress: string | undefined;
-    let explorerUrl: string | undefined;
+    const chainConfig = getEvmChainConfig(argv.sourceChain);
+    
+    const { ccipRouterAddress, ccipOnrampAddress, linkTokenAddress, explorerUrl, rpcUrlEnv, ccipBnMTokenAddress } = chainConfig;
 
-    if (argv.sourceChain === networkConfig.sepolia.networkName) {
-        sourceChainRpcUrl = process.env.ETHEREUM_SEPOLIA_RPC_URL;
-        if (!sourceChainRpcUrl) {
-            throw new Error("Please set the environment variable ETHEREUM_SEPOLIA_RPC_URL.");
-        }
+    const rpcUrl = process.env[rpcUrlEnv];
+    if (!rpcUrl) {
+        throw new Error(`Please set the environment variable ${rpcUrlEnv}.`);
+    }
 
-        const provider = new ethers.JsonRpcProvider(sourceChainRpcUrl);
-        const wallet = new ethers.Wallet(privateKey as string, provider);
+    const provider = new ethers.JsonRpcProvider(rpcUrl);
+    const wallet = new ethers.Wallet(privateKey as string, provider);
 
-        const ccipRouterContract = new ethers.Contract(
-            networkConfig.sepolia.ccipRouterAddress,
-            RouterABI,
-            wallet
-        );
+    const ccipRouterContract = new ethers.Contract(ccipRouterAddress, RouterABI, wallet);
+    const ccipOnRampContract = new ethers.Contract(ccipOnrampAddress, OnRamp_1_6_ABI, wallet);
 
-        const ccipOnRampContract = new ethers.Contract(
-            networkConfig.sepolia.ccipOnrampAddress,
-            OnRamp_1_6_ABI,
-            wallet
-        );
+    const parsedTokenAmount = await parseTokenAmount(ccipBnMTokenAddress, tokenAmount, wallet.provider as ethers.Provider);
 
-        tokenAddress = networkConfig.sepolia.ccipBnMTokenAddress;
-
-        const parsedTokenAmount = await parseTokenAmount(tokenAddress, tokenAmount, wallet.provider as ethers.Provider);
-
-        explorerUrl = networkConfig.sepolia.explorerUrl;
-
-        if (argv.feeToken === networkConfig.aptos.feeTokenNameLink) {
-            feeTokenAddress = networkConfig.sepolia.linkTokenAddress;
-            transferTokenPayLink(wallet, ccipRouterContract, ccipOnRampContract, recipient, aptosAccountAddress, tokenAddress, parsedTokenAmount, feeTokenAddress, explorerUrl);
-        } else if (argv.feeToken === networkConfig.aptos.feeTokenNameNative) {
-            transferTokenPayNative(wallet, ccipRouterContract, ccipOnRampContract, recipient, aptosAccountAddress, tokenAddress, parsedTokenAmount, explorerUrl);
-        } else {
-            throw new Error("Invalid fee token specified. Please specify fee token use --feeToken link or --feeToken native.");
-        }
-
+    if (argv.feeToken === networkConfig.aptos.feeTokenNameLink) {
+        transferTokenPayLink(wallet, ccipRouterContract, ccipOnRampContract, recipient, aptosAccountAddress, ccipBnMTokenAddress, parsedTokenAmount, linkTokenAddress, explorerUrl);
+    } else if (argv.feeToken === networkConfig.aptos.feeTokenNameNative) {
+        transferTokenPayNative(wallet, ccipRouterContract, ccipOnRampContract, recipient, aptosAccountAddress, ccipBnMTokenAddress, parsedTokenAmount, explorerUrl);
     } else {
-        throw new Error("Invalid source chain specified. Please specify --sourceChain sepolia.");
+        throw new Error("Invalid fee token specified. Please specify fee token use --feeToken link or --feeToken native.");
     }
 }
 

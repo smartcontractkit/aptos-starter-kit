@@ -3,9 +3,11 @@ import RouterABI from '../config/abi/Router';
 import ERC20_ABI from '../config/abi/ERC20';
 import OnRamp_1_6_ABI from "../config/abi/OnRamp_1_6";
 import FeeQuoter_1_6_ABI from "../config/abi/FeeQuoter_1_6";
-import { networkConfig } from "../../helper-config";
+import { networkConfig, supportedSourceChains } from "../../helper-config";
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
+import { getEvmChainConfig } from "../utils/utils";
+
 
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -24,9 +26,7 @@ const argv = yargs(hideBin(process.argv))
         type: 'string',
         description: 'Specify the source chain from where the token will be sent',
         demandOption: true,
-        choices: [
-            networkConfig.sepolia.networkName
-        ]
+        choices: supportedSourceChains
     })
     .option('msgString', {
         type: 'string',
@@ -219,48 +219,29 @@ async function sendMessagePayNative(wallet: ethers.Wallet, ccipRouterContract: e
 }
 
 async function sendMessageFromEvmToAptos(messageString: string) {
-    // console.log(await ccipRouterContract.isChainSupported(networkConfig.aptos.chainSelector));
-
     let recipient = argv.aptosReceiver;
-    let sourceChainRpcUrl: string | undefined;
-    let feeTokenAddress: string | undefined;
-    let explorerUrl: string | undefined;
+    const chainConfig = getEvmChainConfig(argv.sourceChain);
 
-    if (argv.sourceChain === networkConfig.sepolia.networkName) {
-        sourceChainRpcUrl = process.env.ETHEREUM_SEPOLIA_RPC_URL;
-        if (!sourceChainRpcUrl) {
-            throw new Error("Please set the environment variable ETHEREUM_SEPOLIA_RPC_URL.");
-        }
+    const { ccipRouterAddress, ccipOnrampAddress, linkTokenAddress, explorerUrl, rpcUrlEnv } = chainConfig;
 
-        const provider = new ethers.JsonRpcProvider(sourceChainRpcUrl);
-        const wallet = new ethers.Wallet(privateKey as string, provider);
+    const rpcUrl = process.env[rpcUrlEnv];
+    if (!rpcUrl) {
+        throw new Error(`Please set the environment variable ${rpcUrlEnv}.`);
+    }
 
-        const ccipRouterContract = new ethers.Contract(
-            networkConfig.sepolia.ccipRouterAddress,
-            RouterABI,
-            wallet
-        );
+    const provider = new ethers.JsonRpcProvider(rpcUrl);
+    const wallet = new ethers.Wallet(privateKey as string, provider);
 
-        const ccipOnRampContract = new ethers.Contract(
-            networkConfig.sepolia.ccipOnrampAddress,
-            OnRamp_1_6_ABI,
-            wallet
-        );
+    const ccipRouterContract = new ethers.Contract(ccipRouterAddress, RouterABI, wallet);
+    const ccipOnRampContract = new ethers.Contract(ccipOnrampAddress, OnRamp_1_6_ABI, wallet);
 
-        explorerUrl = networkConfig.sepolia.explorerUrl;
-
-        if (argv.feeToken === networkConfig.aptos.feeTokenNameLink) {
-            feeTokenAddress = networkConfig.sepolia.linkTokenAddress;
-            sendMessagePayLink(wallet, ccipRouterContract, ccipOnRampContract, recipient, messageString, feeTokenAddress, explorerUrl);
-        } else if (argv.feeToken === networkConfig.aptos.feeTokenNameNative) {
-            sendMessagePayNative(wallet, ccipRouterContract, ccipOnRampContract, recipient, messageString, explorerUrl);
-        } else {
-            throw new Error("Invalid fee token specified. Please specify fee token use --feeToken link or --feeToken native.");
-        }
-
+    if (argv.feeToken === networkConfig.aptos.feeTokenNameLink) {
+        sendMessagePayLink(wallet, ccipRouterContract, ccipOnRampContract, recipient, messageString, linkTokenAddress, explorerUrl);
+    } else if (argv.feeToken === networkConfig.aptos.feeTokenNameNative) {
+        sendMessagePayNative(wallet, ccipRouterContract, ccipOnRampContract, recipient, messageString, explorerUrl);
     } else {
-        throw new Error("Invalid source chain specified. Please specify --sourceChain sepolia.");
-    }           
+        throw new Error("Invalid fee token specified. Please specify fee token use --feeToken link or --feeToken native.");
+    }
 }
 
 
