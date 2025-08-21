@@ -1,8 +1,9 @@
 import { ethers } from "ethers";
 import OffRamp_1_6_ABI from "../config/abi/OffRamp_1_6";
-import { networkConfig } from "../../helper-config";
+import { networkConfig, supportedSourceChains } from "../../helper-config";
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
+import { getEvmChainConfig } from "../utils/utils";
 
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -16,23 +17,20 @@ const argv = yargs(hideBin(process.argv))
         type: 'string',
         description: 'Specify the destination chain where the token will be sent',
         demandOption: true,
-        choices: [
-            networkConfig.aptos.destChains.ethereumSepolia
-        ]
+        choices: supportedSourceChains
     })
     .parseSync();
 
+const chainConfig = getEvmChainConfig(argv.destChain);
 
-let destChainRpcUrl: string | undefined;
-let ccipOfframpAddress: string | undefined;
-if (argv.destChain === networkConfig.sepolia.networkName) {
-    destChainRpcUrl = process.env.ETHEREUM_SEPOLIA_RPC_URL;
-    ccipOfframpAddress = networkConfig.sepolia.ccipOfframpAddress;
-} else {
-    throw new Error("Invalid destination chain specified. Please specify --destChain sepolia.");
+const { ccipOfframpAddress, rpcUrlEnv } = chainConfig;
+
+const rpcUrl = process.env[rpcUrlEnv];
+if (!rpcUrl) {
+    throw new Error(`Please set the environment variable ${rpcUrlEnv}.`);
 }
 
-const provider = new ethers.JsonRpcProvider(destChainRpcUrl);
+const provider = new ethers.JsonRpcProvider(rpcUrl);
 
 // Define the enum for message execution states similar to what is used in the OffRamp contract (imported from Internal library)
 enum MessageExecutionState {

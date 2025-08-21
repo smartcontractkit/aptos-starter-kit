@@ -2,8 +2,9 @@ import { Account, Aptos, AptosConfig, Ed25519PrivateKey, Network, MoveVector, He
 import * as dotenv from 'dotenv';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { networkConfig } from "../../helper-config";
+import { networkConfig, supportedSourceChains } from "../../helper-config";
 import { parseAmountToU64Decimals, fetchEventsByTxHash } from "./utils";
+import { getEvmChainConfig } from "../utils/utils";
 
 dotenv.config();
 
@@ -20,9 +21,7 @@ const argv = yargs(hideBin(process.argv))
         type: 'string',
         description: 'Specify the destination chain where the token will be sent',
         demandOption: true,
-        choices: [
-            networkConfig.aptos.destChains.ethereumSepolia
-        ]
+        choices: supportedSourceChains
     }).option('amount', {
         type: 'number',
         description: 'Amount of token to send',
@@ -56,13 +55,8 @@ async function sendTokenFromAptosToEvm(tokenAmount: number) {
     // Prepare the parameters for entry function
 
     // Chain selector
-    let destChainSelector: string | undefined;
-    if (argv.destChain === networkConfig.aptos.destChains.ethereumSepolia) {
-        destChainSelector = networkConfig.sepolia.chainSelector
-    } else {
-        destChainSelector = undefined
-        throw new Error("Invalid destination chain specified. Please specify --destChain sepolia.");
-    }
+    const chainConfig = getEvmChainConfig(argv.destChain);
+    const destChainSelector = chainConfig.chainSelector;
 
     // Fetch the receiver address and pad it to 32 bytes
     const receiver = argv.evmReceiver;
