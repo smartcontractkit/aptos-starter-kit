@@ -13,8 +13,35 @@ export interface EvmChainConfig {
   ccipBnMTokenAddress: string;
 }
 
+// Define an interface for Aptos chain configurations to ensure type safety
+export interface AptosChainConfig {
+  networkName: string;
+  chainSelector: string;
+  ccipObjectAddress: string;
+  ccipRouterModuleName: string;
+  ccipOfframpModuleName: string;
+  ccipOnrampModuleName: string;
+  ccipBnMTokenAddress: string;
+  ccipBnMFaucetAddress: string;
+  feeTokenNameLink: string;
+  linkTokenAddress: string;
+  feeTokenNameNative: string;
+  nativeTokenAddress: string;
+  feeTokenStoreAddress: string;
+  dataFeedDemoModuleName: string;
+  dataFeedDemoAddressName: string;
+  dataFeedId: string;
+  ccipSenderModuleName: string;
+  ccipSenderAddressName: string;
+  ccipReceiverModuleName: string;
+  ccipReceiverAddressName: string;
+  destChains: { [key: string]: string };
+}
+
+export type ChainConfig = EvmChainConfig | AptosChainConfig;
+
 // Type guard to check if a config is an EVM chain configuration
-function isEvmChainConfig(config: typeof networkConfig[keyof typeof networkConfig]): config is EvmChainConfig {
+function isEvmChainConfig(config: ChainConfig): config is EvmChainConfig {
   return 'ccipRouterAddress' in config && 'ccipOnrampAddress' in config && 'rpcUrlEnv' in config;
 }
 
