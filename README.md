@@ -1,4 +1,6 @@
-# CCIP on Aptos Starter Kit
+# Aptos Starter Kit
+
+A starter kit for working with Chainlink Data Feeds and CCIP.
 
 ## Prerequisites
 
