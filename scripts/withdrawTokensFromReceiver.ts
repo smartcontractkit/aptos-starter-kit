@@ -3,9 +3,10 @@ import { ethers, Interface } from "ethers";
 import * as dotenv from 'dotenv';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { networkConfig } from "../helper-config";
+import { networkConfig, supportedSourceChains } from "../helper-config";
 import ERC20_ABI from './config/abi/ERC20';
 import CCIPReceiver_ABI from './config/abi/CCIPReceiver';
+import { getEvmChainConfig } from "./utils/utils";
 
 dotenv.config();
 
@@ -14,11 +15,7 @@ const argv = yargs(hideBin(process.argv))
         type: 'string',
         description: 'Specify the network to connect to',
         demandOption: true,
-        choices: [
-            networkConfig.aptos.networkName,
-            networkConfig.sepolia.networkName,
-            networkConfig.avalancheFuji.networkName
-        ]
+        choices: [networkConfig.aptos.networkName, ...supportedSourceChains]
     })
     .option('receiver', {
         type: 'string',
@@ -29,16 +26,6 @@ const argv = yargs(hideBin(process.argv))
         type: 'string',
         description: 'Specify the wallet address to withdraw the token to',
         demandOption: true,
-    })
-    .option('tokenAddress', {
-        type: 'string',
-        description: 'Specify the token address to withdraw',
-        demandOption: true,
-        choices: [
-            networkConfig.aptos.ccipBnMTokenAddress,
-            networkConfig.sepolia.ccipBnMTokenAddress,
-            networkConfig.avalancheFuji.ccipBnMTokenAddress
-        ]
     })
     .parseSync();
 
@@ -194,28 +181,17 @@ async function withdrawTokenFromReceiverOnEvm(evmChainRpcUrl: string, explorerUr
 
 async function withdrawTokenFromReceiver() {
 
-    let evmChainRpcUrl: string | undefined;
-    let explorerUrl: string | undefined;
-
     if (argv.network === networkConfig.aptos.networkName) {
-        withdrawTokenFromReceiverOnAptos(argv.receiver, argv.to, argv.tokenAddress);
+        withdrawTokenFromReceiverOnAptos(argv.receiver, argv.to, networkConfig.aptos.ccipBnMTokenAddress);
     }
     else {
-        if (argv.network === networkConfig.sepolia.networkName) {
-            explorerUrl = networkConfig.sepolia.explorerUrl;
-            evmChainRpcUrl = process.env.ETHEREUM_SEPOLIA_RPC_URL;
-            if (!evmChainRpcUrl) {
-                throw new Error("Please set the environment variable ETHEREUM_SEPOLIA_RPC_URL.");
-            }
+        const chainConfig = getEvmChainConfig(argv.network);
+        const { explorerUrl, rpcUrlEnv, ccipBnMTokenAddress } = chainConfig;
+        const rpcUrl = process.env[rpcUrlEnv];
+        if (!rpcUrl) {
+            throw new Error(`Please set the environment variable ${rpcUrlEnv}.`);
         }
-        else if (argv.network === networkConfig.avalancheFuji.networkName) {
-            explorerUrl = networkConfig.avalancheFuji.explorerUrl;
-            evmChainRpcUrl = process.env.AVALANCHE_FUJI_RPC_URL;
-            if (!evmChainRpcUrl) {
-                throw new Error("Please set the environment variable AVALANCHE_FUJI_RPC_URL.");
-            }
-        }
-        withdrawTokenFromReceiverOnEvm(evmChainRpcUrl!, explorerUrl!, argv.receiver, argv.to, argv.tokenAddress);
+        withdrawTokenFromReceiverOnEvm(rpcUrl, explorerUrl, argv.receiver, argv.to, ccipBnMTokenAddress);
     }
 }
 
