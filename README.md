@@ -197,10 +197,10 @@ No ExecutionStateChanged event found in within the last 500 blocks
 
 ### Withdraw tokens from the Receiver contract
 
-If you have sent tokens to a Receiver contract on Ethereum Sepolia, you can withdraw the tokens from the Receiver contract to your EVM address by running the following command:
+If you have sent CCIP-BnM tokens to a Receiver contract on Ethereum Sepolia, you can withdraw the tokens from the Receiver contract to your EVM address by running the following command:
 
 ```shell
-npx ts-node scripts/withdrawTokensFromReceiver.ts --network sepolia --receiver <your receiver contract address on sepolia> --to <your eoa address on sepolia> --tokenAddress <token address on sepolia>
+npx ts-node scripts/withdrawTokensFromReceiver.ts --network sepolia --receiver <your receiver contract address on sepolia> --to <your eoa address on sepolia>
 ```
 
 ### Send arbitrary data using `ccip_router::router` module
@@ -332,10 +332,10 @@ You will see `Execution state for CCIP message <your ccip message id> is SUCCESS
 
 ### Withdraw tokens from the Receiver module
 
-If you have sent tokens to a Receiver module on Aptos Testnet, you can withdraw the tokens from the Receiver module to your Aptos account address by running the following command:
+If you have sent CCIP-BnM tokens to a Receiver module on Aptos Testnet, you can withdraw the tokens from the Receiver module to your Aptos account address by running the following command:
 
 ```shell
-npx ts-node scripts/withdrawTokensFromReceiver.ts --network aptosTestnet --receiver <your receiver module address on aptos> --to <your eoa / account address on aptos> --tokenAddress <token address on aptos>
+npx ts-node scripts/withdrawTokensFromReceiver.ts --network aptosTestnet --receiver <your receiver module address on aptos> --to <your eoa / account address on aptos>
 ```
 
 ### Send arbitrary data using Router contract
