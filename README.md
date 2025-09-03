@@ -2,6 +2,17 @@
 
 A starter kit for working with Chainlink Data Feeds and CCIP.
 
+## Repo structure
+There are 2 main folders in the repo: modules and scripts. 
+
+In folder modules, there are 3 aptos projects to publish the modules that are used for Chainlink products on Aptos. Chainlink Price Feed products related modules are saved in `price_feed_demo`. `ccip_message_receiver`, `ccip_message_sender` are used to publish receiver and sender modules on Aptos network. 
+
+In folder scripts, there are ts scripts to do the following tasks:
+- Transfer message, token and PTT from Aptos -> EVM using Chainlink router
+- Transfer message, token and PTT from Aptos -> EVM using custom router
+- Transfer message, token and PTT from EVM -> Aptos using Chainlink router
+
+
 ## Prerequisites
 
 1. Install [Aptos CLI](https://aptos.dev/en/build/cli)
@@ -196,6 +207,10 @@ No ExecutionStateChanged event found in within the last 500 blocks
 ```
 
 ### Withdraw tokens from the Receiver contract
+
+> **Note**: If you are using EOA as receiver, the token will directly be deposited to your EOA. You do not need to run the command to withdraw tokens. 
+
+> **Note**: The command only works if the receiver contract deployed on EVM chain has the function withdraw. Please check the sample contract [here](/scripts/aptos2evm/receiver/Receiver.sol). You will deploy the contract later. 
 
 If you have sent CCIP-BnM tokens to a Receiver contract on Ethereum Sepolia, you can withdraw the tokens from the Receiver contract to your EVM address by running the following command:
 

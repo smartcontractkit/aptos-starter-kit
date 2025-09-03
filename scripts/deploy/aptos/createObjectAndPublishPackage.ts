@@ -24,7 +24,7 @@ const argv = yargs(hideBin(process.argv))
   .parseSync();
 
 // Define the path to your Move package and the named address
-const PACKAGE_PATH = `contracts/${argv.packageName}`; // The path to the package you want to deploy
+const PACKAGE_PATH = `modules/${argv.packageName}`; // The path to the package you want to deploy
 const NAMED_ADDRESS = argv.addressName; // The key for the named address in your Move.toml
 
 /**

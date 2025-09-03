@@ -23,7 +23,7 @@ const deployerPrivateKey = new Ed25519PrivateKey(privateKeyHex);
 const deployerAccount = Account.fromPrivateKey({ privateKey: deployerPrivateKey });
 
 // 3. Define the package to be deployed
-const PACKAGE_PATH = "contracts/ccip_message_receiver"; // The path to the package you want to deploy
+const PACKAGE_PATH = "modules/ccip_message_receiver"; // The path to the package you want to deploy
 const SEED_PREFIX = "resource_account_seed_"; // Prefix for the dynamic seed
 
 /**
