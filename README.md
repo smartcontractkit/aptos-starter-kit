@@ -8,9 +8,9 @@ There are 2 main folders in the repo: modules and scripts.
 In folder modules, there are 3 aptos projects to publish the modules that are used for Chainlink products on Aptos. Chainlink Price Feed products related modules are saved in `price_feed_demo`. `ccip_message_receiver`, `ccip_message_sender` are used to publish receiver and sender modules on Aptos network. 
 
 In folder scripts, there are ts scripts to do the following tasks:
-- Transfer message, token and PTT from Aptos -> EVM using official router
+- Transfer message, token and PTT from Aptos -> EVM using Chainlink router
 - Transfer message, token and PTT from Aptos -> EVM using custom router
-- Transfer message, token and PTT from EVM -> Aptos using official router
+- Transfer message, token and PTT from EVM -> Aptos using Chainlink router
 
 
 ## Prerequisites
