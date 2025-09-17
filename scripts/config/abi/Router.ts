@@ -498,4 +498,4 @@ export default [
     type: 'function',
   },
   // generate:end
-] as const
+] as const;

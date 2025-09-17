@@ -1525,4 +1525,4 @@ export default [
   { type: 'error', name: 'ZeroAddressNotAllowed', inputs: [] },
   { type: 'error', name: 'ZeroChainSelectorNotAllowed', inputs: [] },
   // generate:end
-] as const
+] as const;
