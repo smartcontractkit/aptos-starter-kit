@@ -138,6 +138,8 @@ Note down the address of the object at which the `ccip_message_sender` module is
 
 ### Publish the `ccip_message_receiver` module
 
+> NOTE: The `ccip_message_receiver` module **should only be used with non-dispatchable tokens**, as it is currently incompatible with [dispatchable tokens](https://aptosfoundation.org/currents/dispatchable-fungible-assets-101).
+
 The `ccip_message_receiver` module is used to receive messages and tokens from EVM chains. It is a CCIP receiver module that can receive arbitrary data and tokens from EVM chains.
 
 Publish the `ccip_message_receiver` module to a resource account by running the following command:
