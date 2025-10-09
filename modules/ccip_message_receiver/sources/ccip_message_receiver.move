@@ -1,3 +1,6 @@
+/// The `ccip_message_receiver` module **should only be used with non-dispatchable tokens**, 
+/// as it is currently incompatible with dispatchable tokens.
+
 module receiver::ccip_message_receiver {
     use std::account;
     use std::event;
