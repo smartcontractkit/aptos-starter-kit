@@ -1,4 +1,4 @@
-/// The `ccip_message_receiver` module **should only be used with non-dispatchable tokens**, 
+/// This module should only be used with non-dispatchable tokens,
 /// as it is currently incompatible with dispatchable tokens.
 
 module receiver::ccip_message_receiver {
@@ -67,6 +67,8 @@ module receiver::ccip_message_receiver {
 
     struct CCIPReceiverProof has drop {}
 
+    /// This function should only be used with non-dispatchable tokens, 
+    /// as it is currently incompatible with dispatchable tokens.
     public fun ccip_receive<T: key>(_metadata: Object<T>): Option<u128> acquires CCIPReceiverState {
         /* load state and rebuild a signer for the resource account */
         let state = borrow_global_mut<CCIPReceiverState>(@receiver);
@@ -127,6 +129,8 @@ module receiver::ccip_message_receiver {
         option::none()
     }
 
+    /// This function should only be used with non-dispatchable tokens, 
+    /// as it is currently incompatible with dispatchable tokens.
     public entry fun withdraw_token(
         sender: &signer, 
         recipient: address, 
