@@ -9,24 +9,24 @@ module sender::ccip_message_sender {
         receiver: vector<u8>,
         message_data: vector<u8>,
         fee_token: address,
-        fee_token_store: address,
+        fee_token_store: address
     ) {
         // Create extra_args based on destination chain type
         let extra_args = client::encode_generic_extra_args_v2(100000, true);
-        
+
         router::ccip_send(
             caller,
             dest_chain_selector,
             receiver,
             message_data,
-            vector::empty<address>(),  // No token transfers
-            vector::empty<u64>(),      // No token amounts
-            vector::empty<address>(),  // No token stores
+            vector::empty<address>(), // No token transfers
+            vector::empty<u64>(), // No token amounts
+            vector::empty<address>(), // No token stores
             fee_token,
             fee_token_store,
             extra_args
         );
-    } 
+    }
 
     // Token transfers
     public entry fun send_tokens(
@@ -41,12 +41,12 @@ module sender::ccip_message_sender {
     ) {
         // Create extra_args based on destination chain type
         let extra_args = client::encode_generic_extra_args_v2(100000, true);
-        
+
         router::ccip_send(
             caller,
             dest_chain_selector,
             receiver,
-            vector::empty<u8>(),      // No message data
+            vector::empty<u8>(), // No message data
             token_addresses,
             token_amounts,
             token_store_addresses,
@@ -70,7 +70,7 @@ module sender::ccip_message_sender {
     ) {
         // Create extra_args based on destination chain type
         let extra_args = client::encode_generic_extra_args_v2(100000, true);
-        
+
         router::ccip_send(
             caller,
             dest_chain_selector,

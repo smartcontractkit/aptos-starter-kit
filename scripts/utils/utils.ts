@@ -1,4 +1,4 @@
-import { networkConfig, supportedSourceChains } from "../../helper-config";
+import { networkConfig, supportedSourceChains } from '../../helper-config';
 
 // Define an interface for EVM chain configurations to ensure type safety
 export interface EvmChainConfig {
@@ -42,7 +42,11 @@ export type ChainConfig = EvmChainConfig | AptosChainConfig;
 
 // Type guard to check if a config is an EVM chain configuration
 function isEvmChainConfig(config: ChainConfig): config is EvmChainConfig {
-  return 'ccipRouterAddress' in config && 'ccipOnrampAddress' in config && 'rpcUrlEnv' in config;
+  return (
+    'ccipRouterAddress' in config &&
+    'ccipOnrampAddress' in config &&
+    'rpcUrlEnv' in config
+  );
 }
 
 /**
@@ -53,11 +57,14 @@ function isEvmChainConfig(config: ChainConfig): config is EvmChainConfig {
  */
 export function getEvmChainConfig(sourceChain: string): EvmChainConfig {
   const chainConfig = Object.values(networkConfig).find(
-    (config): config is EvmChainConfig => isEvmChainConfig(config) && config.networkName === sourceChain
+    (config): config is EvmChainConfig =>
+      isEvmChainConfig(config) && config.networkName === sourceChain
   );
 
   if (!chainConfig) {
-    throw new Error(`Invalid source chain specified: ${sourceChain}. Please specify a valid source chain from ${supportedSourceChains.join(', ')}.`);
+    throw new Error(
+      `Invalid source chain specified: ${sourceChain}. Please specify a valid source chain from ${supportedSourceChains.join(', ')}.`
+    );
   }
 
   return chainConfig;

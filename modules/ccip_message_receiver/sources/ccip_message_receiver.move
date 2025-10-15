@@ -18,18 +18,18 @@ module receiver::ccip_message_receiver {
 
     #[event]
     struct ReceivedMessage has store, drop {
-        message: String,
+        message: String
     }
 
     #[event]
     struct ForwardedTokens has store, drop {
-        final_recipient: address,
+        final_recipient: address
     }
 
     struct CCIPReceiverState has key {
         signer_cap: account::SignerCapability,
         received_message_handle: event::EventHandle<ReceivedMessage>,
-        forwarded_tokens_handle: event::EventHandle<ForwardedTokens>,
+        forwarded_tokens_handle: event::EventHandle<ForwardedTokens>
     }
 
     const E_RESOURCE_NOT_FOUND_ON_ACCOUNT: u64 = 1;
@@ -49,8 +49,10 @@ module receiver::ccip_message_receiver {
             resource_account::retrieve_resource_account_cap(publisher, @deployer);
 
         // Create a unique handle for each event type
-        let received_message_handle = account::new_event_handle<ReceivedMessage>(publisher);
-        let forwarded_tokens_handle = account::new_event_handle<ForwardedTokens>(publisher);
+        let received_message_handle =
+            account::new_event_handle<ReceivedMessage>(publisher);
+        let forwarded_tokens_handle =
+            account::new_event_handle<ForwardedTokens>(publisher);
 
         // Move all state into the single resource struct
         move_to(
@@ -58,7 +60,7 @@ module receiver::ccip_message_receiver {
             CCIPReceiverState {
                 signer_cap,
                 received_message_handle,
-                forwarded_tokens_handle,
+                forwarded_tokens_handle
             }
         );
 
@@ -74,12 +76,11 @@ module receiver::ccip_message_receiver {
         let state = borrow_global_mut<CCIPReceiverState>(@receiver);
         let state_signer = account::create_signer_with_capability(&state.signer_cap);
 
-        let message = receiver_registry::get_receiver_input(
-            @receiver, CCIPReceiverProof {}
-        );
+        let message =
+            receiver_registry::get_receiver_input(@receiver, CCIPReceiverProof {});
 
         let data = client::get_data(&message);
-        
+
         let dest_token_amounts = client::get_dest_token_amounts(&message);
 
         if (dest_token_amounts.length() != 0 && data.length() != 0) {
@@ -94,7 +95,9 @@ module receiver::ccip_message_receiver {
 
                 let fa_token = object::address_to_object<Metadata>(token_addr);
                 let fa_store_sender =
-                    primary_fungible_store::ensure_primary_store_exists(@receiver, fa_token);
+                    primary_fungible_store::ensure_primary_store_exists(
+                        @receiver, fa_token
+                    );
                 let fa_store_receiver =
                     primary_fungible_store::ensure_primary_store_exists(
                         final_recipient, fa_token
@@ -109,15 +112,19 @@ module receiver::ccip_message_receiver {
             };
 
             event::emit(ForwardedTokens { final_recipient });
-            event::emit_event(&mut state.forwarded_tokens_handle, ForwardedTokens { final_recipient });
+            event::emit_event(
+                &mut state.forwarded_tokens_handle, ForwardedTokens { final_recipient }
+            );
 
         } else if (data.length() != 0) {
-            
+
             // Convert the vector<u8> to a string
             let message = string::utf8(data);
 
-            event::emit( ReceivedMessage { message });
-            event::emit_event(&mut state.received_message_handle, ReceivedMessage { message });
+            event::emit(ReceivedMessage { message });
+            event::emit_event(
+                &mut state.received_message_handle, ReceivedMessage { message }
+            );
 
         };
 
@@ -132,11 +139,8 @@ module receiver::ccip_message_receiver {
     /// This function should only be used with non-dispatchable tokens, 
     /// as it is currently incompatible with dispatchable tokens.
     public entry fun withdraw_token(
-        sender: &signer, 
-        recipient: address, 
-        token_address: address,
+        sender: &signer, recipient: address, token_address: address
     ) acquires CCIPReceiverState {
-
         assert!(exists<CCIPReceiverState>(@receiver), E_RESOURCE_NOT_FOUND_ON_ACCOUNT);
         assert!(signer::address_of(sender) == @deployer, E_UNAUTHORIZED);
 
@@ -147,9 +151,7 @@ module receiver::ccip_message_receiver {
         let fa_store_sender =
             primary_fungible_store::ensure_primary_store_exists(@receiver, fa_token);
         let fa_store_receiver =
-            primary_fungible_store::ensure_primary_store_exists(
-                recipient, fa_token
-            );
+            primary_fungible_store::ensure_primary_store_exists(recipient, fa_token);
 
         let balance = fungible_asset::balance(fa_store_sender);
 

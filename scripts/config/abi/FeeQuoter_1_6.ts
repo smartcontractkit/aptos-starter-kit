@@ -83,7 +83,8 @@ export default [
           {
             name: 'tokenTransferFeeConfigs',
             type: 'tuple[]',
-            internalType: 'structFeeQuoter.TokenTransferFeeConfigSingleTokenArgs[]',
+            internalType:
+              'structFeeQuoter.TokenTransferFeeConfigSingleTokenArgs[]',
             components: [
               {
                 name: 'token',
@@ -477,7 +478,8 @@ export default [
           {
             name: 'tokenTransferFeeConfigs',
             type: 'tuple[]',
-            internalType: 'structFeeQuoter.TokenTransferFeeConfigSingleTokenArgs[]',
+            internalType:
+              'structFeeQuoter.TokenTransferFeeConfigSingleTokenArgs[]',
             components: [
               {
                 name: 'token',
@@ -1900,4 +1902,4 @@ export default [
   },
   { type: 'error', name: 'ZeroAddressNotAllowed', inputs: [] },
   // generate:end
-] as const
+] as const;

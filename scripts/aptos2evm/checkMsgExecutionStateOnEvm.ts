@@ -1,25 +1,26 @@
-import { ethers } from "ethers";
-import OffRamp_1_6_ABI from "../config/abi/OffRamp_1_6";
-import { networkConfig, supportedSourceChains } from "../../helper-config";
+import { ethers } from 'ethers';
+import OffRamp_1_6_ABI from '../config/abi/OffRamp_1_6';
+import { supportedSourceChains } from '../../helper-config';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { getEvmChainConfig } from "../utils/utils";
+import { getEvmChainConfig } from '../utils/utils';
 
-import * as dotenv from "dotenv";
+import * as dotenv from 'dotenv';
 dotenv.config();
 
 const argv = yargs(hideBin(process.argv))
-    .option('msgId', {
-        type: 'string',
-        description: 'Specify the CCIP Message Id',
-        demandOption: true,
-    }).option("destChain", {
-        type: 'string',
-        description: 'Specify the destination chain where the token will be sent',
-        demandOption: true,
-        choices: supportedSourceChains
-    })
-    .parseSync();
+  .option('msgId', {
+    type: 'string',
+    description: 'Specify the CCIP Message Id',
+    demandOption: true,
+  })
+  .option('destChain', {
+    type: 'string',
+    description: 'Specify the destination chain where the token will be sent',
+    demandOption: true,
+    choices: supportedSourceChains,
+  })
+  .parseSync();
 
 const chainConfig = getEvmChainConfig(argv.destChain);
 
@@ -27,74 +28,74 @@ const { ccipOfframpAddress, rpcUrlEnv } = chainConfig;
 
 const rpcUrl = process.env[rpcUrlEnv];
 if (!rpcUrl) {
-    throw new Error(`Please set the environment variable ${rpcUrlEnv}.`);
+  throw new Error(`Please set the environment variable ${rpcUrlEnv}.`);
 }
 
 const provider = new ethers.JsonRpcProvider(rpcUrl);
 
 // Define the enum for message execution states similar to what is used in the OffRamp contract (imported from Internal library)
 enum MessageExecutionState {
-    UNTOUCHED,
-    IN_PROGRESS,
-    SUCCESS,
-    FAILURE
+  UNTOUCHED,
+  IN_PROGRESS,
+  SUCCESS,
+  FAILURE,
 }
 
 async function findExecutionStateChangeByMessageId() {
-    // check the status on evm based on the messageId
-    const iface = new ethers.Interface(OffRamp_1_6_ABI);
-    const eventTopic = iface.getEvent("ExecutionStateChanged")!.topicHash;
-    const latestBlock = await provider.getBlockNumber();
+  // check the status on evm based on the messageId
+  const iface = new ethers.Interface(OffRamp_1_6_ABI);
+  const eventTopic = iface.getEvent('ExecutionStateChanged')!.topicHash;
+  const latestBlock = await provider.getBlockNumber();
 
-    const logs = await provider.getLogs({
-        address: ccipOfframpAddress,
-        fromBlock: latestBlock - 499, // Using a range of 500 blocks considering the RPC limits
-        toBlock: latestBlock,
-        topics: [eventTopic],
-    });
+  const logs = await provider.getLogs({
+    address: ccipOfframpAddress,
+    fromBlock: latestBlock - 499, // Using a range of 500 blocks considering the RPC limits
+    toBlock: latestBlock,
+    topics: [eventTopic],
+  });
 
-    if (logs.length === 0) {
-        console.warn("No ExecutionStateChanged event found in within the last 500 blocks");
-    }
-    else {
+  if (logs.length === 0) {
+    console.warn(
+      'No ExecutionStateChanged event found in within the last 500 blocks'
+    );
+  } else {
+    let messageIdFound = false;
 
-        let messageIdFound = false;
+    for (const log of logs.reverse()) {
+      try {
+        const parsed = iface.parseLog(log);
 
-        for (const log of logs.reverse()) {
-            try {
-                const parsed = iface.parseLog(log);
+        const messageId = parsed?.args.messageId as string;
 
-                const messageId = parsed?.args.messageId as string;
+        if (messageId.toLowerCase() === argv.msgId.toLowerCase()) {
+          // Optional: verify it's an `execute()` call
+          const tx = await provider.getTransaction(log.transactionHash);
+          const executeSighash = iface.getFunction('execute')!.selector;
 
-                if (messageId.toLowerCase() === argv.msgId.toLowerCase()) {
-                    // Optional: verify it's an `execute()` call
-                    const tx = await provider.getTransaction(log.transactionHash);
-                    const executeSighash = iface.getFunction("execute")!.selector;
+          if (tx?.data.startsWith(executeSighash)) {
+            const stateValue = parsed?.args.state;
+            // Cast to enum
+            const executionState = MessageExecutionState[stateValue as number];
 
-                    if (tx?.data.startsWith(executeSighash)) {
+            console.log(
+              `Execution state for CCIP message ${argv.msgId} is ${executionState}`
+            ); // e.g., "SUCCESS"
 
-                        const stateValue = parsed?.args.state;
-                        // Cast to enum
-                        const executionState = MessageExecutionState[stateValue as number];
+            messageIdFound = true;
 
-                        console.log(`Execution state for CCIP message ${argv.msgId} is ${executionState}`); // e.g., "SUCCESS"
-
-                        messageIdFound = true;
-
-                        break; // Exit loop after finding the first match
-                    }
-                }
-
-            } catch (err) {
-                console.error("Error parsing log:", err);
-                continue;
-            }
+            break; // Exit loop after finding the first match
+          }
         }
-
-        if (!messageIdFound) {
-            console.warn("No matching messageId found in within the last 500 blocks");
-        }
+      } catch (err) {
+        console.error('Error parsing log:', err);
+        continue;
+      }
     }
+
+    if (!messageIdFound) {
+      console.warn('No matching messageId found in within the last 500 blocks');
+    }
+  }
 }
 
-findExecutionStateChangeByMessageId()
+findExecutionStateChangeByMessageId();

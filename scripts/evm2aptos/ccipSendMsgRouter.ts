@@ -1,304 +1,382 @@
-import { ethers, Interface, hexlify, toUtf8Bytes } from "ethers";
+import { ethers, Interface, hexlify, toUtf8Bytes } from 'ethers';
 import RouterABI from '../config/abi/Router';
 import ERC20_ABI from '../config/abi/ERC20';
-import OnRamp_1_6_ABI from "../config/abi/OnRamp_1_6";
-import FeeQuoter_1_6_ABI from "../config/abi/FeeQuoter_1_6";
-import { networkConfig, supportedSourceChains } from "../../helper-config";
+import OnRamp_1_6_ABI from '../config/abi/OnRamp_1_6';
+import FeeQuoter_1_6_ABI from '../config/abi/FeeQuoter_1_6';
+import { networkConfig, supportedSourceChains } from '../../helper-config';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { getEvmChainConfig } from "../utils/utils";
+import { getEvmChainConfig } from '../utils/utils';
 
-
-import * as dotenv from "dotenv";
+import * as dotenv from 'dotenv';
 dotenv.config();
 
 const argv = yargs(hideBin(process.argv))
-    .option('feeToken', {
-        type: 'string',
-        description: 'Specify the fee token (link or native)',
-        demandOption: true,
-        choices: [
-            networkConfig.aptos.feeTokenNameLink,
-            networkConfig.aptos.feeTokenNameNative
-        ],
-    })
-    .option("sourceChain", {
-        type: 'string',
-        description: 'Specify the source chain from where the token will be sent',
-        demandOption: true,
-        choices: supportedSourceChains
-    })
-    .option('msgString', {
-        type: 'string',
-        description: 'Specify the message string to send',
-        demandOption: true
-    })
-    .option('aptosReceiver', {
-        type: 'string',
-        description: 'Specify the Aptos Receiver Address',
-        demandOption: true
-    })
-    .parseSync();
+  .option('feeToken', {
+    type: 'string',
+    description: 'Specify the fee token (link or native)',
+    demandOption: true,
+    choices: [
+      networkConfig.aptos.feeTokenNameLink,
+      networkConfig.aptos.feeTokenNameNative,
+    ],
+  })
+  .option('sourceChain', {
+    type: 'string',
+    description: 'Specify the source chain from where the token will be sent',
+    demandOption: true,
+    choices: supportedSourceChains,
+  })
+  .option('msgString', {
+    type: 'string',
+    description: 'Specify the message string to send',
+    demandOption: true,
+  })
+  .option('aptosReceiver', {
+    type: 'string',
+    description: 'Specify the Aptos Receiver Address',
+    demandOption: true,
+  })
+  .parseSync();
 
 const privateKey = process.env.PRIVATE_KEY;
 if (!privateKey) {
-    throw new Error("Please set the environment variable PRIVATE_KEY.");
+  throw new Error('Please set the environment variable PRIVATE_KEY.');
 }
 
 async function approveToken(
-    wallet: ethers.Wallet,
-    ccipRouterAddress: string,
-    tokenAddress: string,
-    amount: bigint
+  wallet: ethers.Wallet,
+  ccipRouterAddress: string,
+  tokenAddress: string,
+  amount: bigint
 ) {
-    const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, wallet);
+  const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, wallet);
 
-    const currentAllowance: bigint = await tokenContract.allowance(wallet.address, ccipRouterAddress);
-    console.log(`Current Allowance of ${await tokenContract.symbol()} token:`, currentAllowance.toString());
+  const currentAllowance: bigint = await tokenContract.allowance(
+    wallet.address,
+    ccipRouterAddress
+  );
+  console.log(
+    `Current Allowance of ${await tokenContract.symbol()} token:`,
+    currentAllowance.toString()
+  );
 
-    if (currentAllowance >= amount) {
-        console.log("Sufficient allowance already granted.");
-        return;
-    }
+  if (currentAllowance >= amount) {
+    console.log('Sufficient allowance already granted.');
+    return;
+  }
 
-    const tx = await tokenContract.approve(ccipRouterAddress, amount);
-    console.log("Approval tx sent:", tx.hash);
-    const confirmationsToWait = 3;
-    const receipt = await tx.wait(confirmationsToWait);
-    console.log(`Approval transaction confirmed in block ${receipt.blockNumber} after ${confirmationsToWait} confirmations.`);
-    console.log(`Router contract approved to spend ${amount} of ${await tokenContract.symbol()} token from your account.`);
+  const tx = await tokenContract.approve(ccipRouterAddress, amount);
+  console.log('Approval tx sent:', tx.hash);
+  const confirmationsToWait = 3;
+  const receipt = await tx.wait(confirmationsToWait);
+  console.log(
+    `Approval transaction confirmed in block ${receipt.blockNumber} after ${confirmationsToWait} confirmations.`
+  );
+  console.log(
+    `Router contract approved to spend ${amount} of ${await tokenContract.symbol()} token from your account.`
+  );
 }
 
 function buildCCIPMessage(
-    recipient: string,
-    data: string,
-    feeToken: string,
-    extraArgs: string
+  recipient: string,
+  data: string,
+  feeToken: string,
+  extraArgs: string
 ): Array<any> {
-    return [
-        recipient,
-        data,
-        [], // empty array for tokens as we're sending a message only, no tokens involved
-        feeToken,
-        extraArgs
-    ];
+  return [
+    recipient,
+    data,
+    [], // empty array for tokens as we're sending a message only, no tokens involved
+    feeToken,
+    extraArgs,
+  ];
 }
 
-function encodeExtraArgsV2(gasLimit: bigint, allowOutOfOrderExecution: boolean): string {
-    const abiCoder = ethers.AbiCoder.defaultAbiCoder();
+function encodeExtraArgsV2(
+  gasLimit: bigint,
+  allowOutOfOrderExecution: boolean
+): string {
+  const abiCoder = ethers.AbiCoder.defaultAbiCoder();
 
-    const encodedArgs = abiCoder.encode(["tuple(uint256 gasLimit, bool allowOutOfOrderExecution)"], [[gasLimit, allowOutOfOrderExecution]]);
+  const encodedArgs = abiCoder.encode(
+    ['tuple(uint256 gasLimit, bool allowOutOfOrderExecution)'],
+    [[gasLimit, allowOutOfOrderExecution]]
+  );
 
-    const GENERIC_EXTRA_ARGS_V2_TAG = "0x181dcf10";
+  const GENERIC_EXTRA_ARGS_V2_TAG = '0x181dcf10';
 
-    return ethers.concat([GENERIC_EXTRA_ARGS_V2_TAG, encodedArgs]);
+  return ethers.concat([GENERIC_EXTRA_ARGS_V2_TAG, encodedArgs]);
 }
 
 async function extractCCIPMessageId(
-    ccipOnRampContract: ethers.Contract,
-    receipt: ethers.TransactionReceipt,
+  ccipOnRampContract: ethers.Contract,
+  receipt: ethers.TransactionReceipt
 ): Promise<string | null> {
+  for (const log of receipt.logs) {
+    try {
+      const parsedLog = ccipOnRampContract.interface.parseLog(log);
 
-    for (const log of receipt.logs) {
-        try {
-            const parsedLog = ccipOnRampContract.interface.parseLog(log);
+      if (parsedLog?.name === 'CCIPMessageSent') {
+        const message = parsedLog.args.message;
+        const messageId: string = message.header.messageId;
 
-            if (parsedLog?.name === "CCIPMessageSent") {
-                const message = parsedLog.args.message;
-                const messageId: string = message.header.messageId;
-
-                console.log("🆔 CCIP Message ID:", messageId);
-                console.log(`🔗 CCIP Explorer URL: https://ccip.chain.link/#/side-drawer/msg/${messageId}`);
-                return messageId;
-            }
-        } catch {
-            // Skip unrelated logs
-            continue;
-        }
+        console.log('🆔 CCIP Message ID:', messageId);
+        console.log(
+          `🔗 CCIP Explorer URL: https://ccip.chain.link/#/side-drawer/msg/${messageId}`
+        );
+        return messageId;
+      }
+    } catch {
+      // Skip unrelated logs
+      continue;
     }
+  }
 
-    console.warn("❌ CCIPMessageSent event not found.");
-    return null;
+  console.warn('❌ CCIPMessageSent event not found.');
+  return null;
 }
 
-async function sendMessagePayLink(wallet: ethers.Wallet, ccipRouterContract: ethers.Contract, ccipOnRampContract: ethers.Contract, recipient: string, messageString: string, feeTokenAddress: string, explorerUrl: string) {
+async function sendMessagePayLink(
+  wallet: ethers.Wallet,
+  ccipRouterContract: ethers.Contract,
+  ccipOnRampContract: ethers.Contract,
+  recipient: string,
+  messageString: string,
+  feeTokenAddress: string,
+  explorerUrl: string
+) {
+  try {
+    const ccipMessage = buildCCIPMessage(
+      recipient,
+      hexlify(toUtf8Bytes(messageString)), // test data, can be any valid hex string
+      feeTokenAddress,
+      encodeExtraArgsV2(100000n, true) // Gas limit set to 200000. This is a reasonable default for most messages, OoO (Out of Order) execution enabled
+    );
 
-    try {
+    const baseFee: bigint = await ccipRouterContract.getFee(
+      networkConfig.aptos.chainSelector,
+      ccipMessage
+    );
 
-        const ccipMessage = buildCCIPMessage(
-            recipient,
-            hexlify(toUtf8Bytes(messageString)), // test data, can be any valid hex string
-            feeTokenAddress,
-            encodeExtraArgsV2(100000n, true) // Gas limit set to 200000. This is a reasonable default for most messages, OoO (Out of Order) execution enabled
-        );
+    // Add 20% margin
+    const margin = baseFee / 5n; // 20% of base fee
+    const feeWithBuffer = baseFee + margin;
 
-        const baseFee: bigint = await ccipRouterContract.getFee(networkConfig.aptos.chainSelector, ccipMessage);
+    console.log('Base Fee (in LINK JUELS):', baseFee.toString());
+    console.log(
+      'Fee with 20% buffer (in LINK JUELS):',
+      feeWithBuffer.toString()
+    );
 
-        // Add 20% margin
-        const margin = baseFee / 5n; // 20% of base fee
-        const feeWithBuffer = baseFee + margin;
+    // Approve the LINK token for fee payment
+    await approveToken(
+      wallet,
+      await ccipRouterContract.getAddress(),
+      feeTokenAddress,
+      feeWithBuffer
+    );
 
-        console.log("Base Fee (in LINK JUELS):", baseFee.toString());
-        console.log("Fee with 20% buffer (in LINK JUELS):", feeWithBuffer.toString());
+    console.log('Proceeding with the message transfer...');
 
-        // Approve the LINK token for fee payment
-        await approveToken(wallet, await ccipRouterContract.getAddress(), feeTokenAddress, feeWithBuffer);
+    const tx = await ccipRouterContract.ccipSend(
+      networkConfig.aptos.chainSelector,
+      ccipMessage
+    );
 
-        console.log("Proceeding with the message transfer...");
-
-        const tx = await ccipRouterContract.ccipSend(
-            networkConfig.aptos.chainSelector,
-            ccipMessage
-        );
-
-        console.log("Transaction sent:", tx.hash);
-        console.log("Waiting for transaction confirmation...");
-        const confirmationsToWait = 3;
-        const receipt = await tx.wait(confirmationsToWait);
-        console.log(`Transaction confirmed in block ${receipt.blockNumber} after ${confirmationsToWait} confirmations.`);
-        console.log("✅ Transaction successful:", `${explorerUrl}/tx/${tx.hash}`);
-        await extractCCIPMessageId(ccipOnRampContract, receipt);
-    } catch (error) {
-        handleError([
-            { name: "CCIPRouterInterface", iface: ccipRouterContract.interface },
-            { name: "CCIPOnRampInterface", iface: ccipOnRampContract.interface },
-            { name: "ERC20Interface", iface: new Interface(ERC20_ABI) },
-            { name: "FeeQuoterInterface", iface: new Interface(FeeQuoter_1_6_ABI) }
-        ], error);
-    }
-
+    console.log('Transaction sent:', tx.hash);
+    console.log('Waiting for transaction confirmation...');
+    const confirmationsToWait = 3;
+    const receipt = await tx.wait(confirmationsToWait);
+    console.log(
+      `Transaction confirmed in block ${receipt.blockNumber} after ${confirmationsToWait} confirmations.`
+    );
+    console.log('✅ Transaction successful:', `${explorerUrl}/tx/${tx.hash}`);
+    await extractCCIPMessageId(ccipOnRampContract, receipt);
+  } catch (error) {
+    handleError(
+      [
+        { name: 'CCIPRouterInterface', iface: ccipRouterContract.interface },
+        { name: 'CCIPOnRampInterface', iface: ccipOnRampContract.interface },
+        { name: 'ERC20Interface', iface: new Interface(ERC20_ABI) },
+        { name: 'FeeQuoterInterface', iface: new Interface(FeeQuoter_1_6_ABI) },
+      ],
+      error
+    );
+  }
 }
 
-async function sendMessagePayNative(wallet: ethers.Wallet, ccipRouterContract: ethers.Contract, ccipOnRampContract: ethers.Contract, recipient: string, messageString: string, explorerUrl: string) {
+async function sendMessagePayNative(
+  wallet: ethers.Wallet,
+  ccipRouterContract: ethers.Contract,
+  ccipOnRampContract: ethers.Contract,
+  recipient: string,
+  messageString: string,
+  explorerUrl: string
+) {
+  try {
+    const ccipMessage = buildCCIPMessage(
+      recipient,
+      hexlify(toUtf8Bytes(messageString)), // test data, can be any valid hex string
+      ethers.ZeroAddress, // Fee token is set to zero address (in case of using native token as fee)
+      encodeExtraArgsV2(100000n, true) // Gas limit set to 200000. This is a reasonable default for most messages, OoO (Out of Order) execution enabled
+    );
 
-    try {
+    const baseFee: bigint = await ccipRouterContract.getFee(
+      networkConfig.aptos.chainSelector,
+      ccipMessage
+    );
 
-        const ccipMessage = buildCCIPMessage(
-            recipient,
-            hexlify(toUtf8Bytes(messageString)), // test data, can be any valid hex string
-            ethers.ZeroAddress, // Fee token is set to zero address (in case of using native token as fee)
-            encodeExtraArgsV2(100000n, true) // Gas limit set to 200000. This is a reasonable default for most messages, OoO (Out of Order) execution enabled
-        );
+    // Add 20% margin
+    const margin = baseFee / 5n; // 20% of base fee
+    const feeWithBuffer = baseFee + margin;
 
-        const baseFee: bigint = await ccipRouterContract.getFee(networkConfig.aptos.chainSelector, ccipMessage);
+    console.log('Base Fee (in WEI):', baseFee.toString());
+    console.log('Fee with 20% buffer (in WEI):', feeWithBuffer.toString());
 
-        // Add 20% margin
-        const margin = baseFee / 5n; // 20% of base fee
-        const feeWithBuffer = baseFee + margin;
+    console.log('Proceeding with the message transfer...');
 
-        console.log("Base Fee (in WEI):", baseFee.toString());
-        console.log("Fee with 20% buffer (in WEI):", feeWithBuffer.toString());
+    const tx = await ccipRouterContract.ccipSend(
+      networkConfig.aptos.chainSelector,
+      ccipMessage,
+      {
+        value: feeWithBuffer, // Send the fee in native currency (ETH)
+      }
+    );
 
-        console.log("Proceeding with the message transfer...");
-
-        const tx = await ccipRouterContract.ccipSend(
-            networkConfig.aptos.chainSelector,
-            ccipMessage,
-            {
-                value: feeWithBuffer, // Send the fee in native currency (ETH)
-            }
-        );
-
-        console.log("Transaction sent:", tx.hash);
-        console.log("Waiting for transaction confirmation...");
-        const confirmationsToWait = 3;
-        const receipt = await tx.wait(confirmationsToWait);
-        console.log(`Transaction confirmed in block ${receipt.blockNumber} after ${confirmationsToWait} confirmations.`);
-        console.log("✅ Transaction successful:", `${explorerUrl}/tx/${tx.hash}`);
-        await extractCCIPMessageId(ccipOnRampContract, receipt);
-    } catch (error) {
-
-        handleError([
-            { name: "CCIPRouterInterface", iface: ccipRouterContract.interface },
-            { name: "CCIPOnRampInterface", iface: ccipOnRampContract.interface },
-            { name: "ERC20Interface", iface: new Interface(ERC20_ABI) },
-            { name: "FeeQuoterInterface", iface: new Interface(FeeQuoter_1_6_ABI) }
-        ], error);
-    }
-
+    console.log('Transaction sent:', tx.hash);
+    console.log('Waiting for transaction confirmation...');
+    const confirmationsToWait = 3;
+    const receipt = await tx.wait(confirmationsToWait);
+    console.log(
+      `Transaction confirmed in block ${receipt.blockNumber} after ${confirmationsToWait} confirmations.`
+    );
+    console.log('✅ Transaction successful:', `${explorerUrl}/tx/${tx.hash}`);
+    await extractCCIPMessageId(ccipOnRampContract, receipt);
+  } catch (error) {
+    handleError(
+      [
+        { name: 'CCIPRouterInterface', iface: ccipRouterContract.interface },
+        { name: 'CCIPOnRampInterface', iface: ccipOnRampContract.interface },
+        { name: 'ERC20Interface', iface: new Interface(ERC20_ABI) },
+        { name: 'FeeQuoterInterface', iface: new Interface(FeeQuoter_1_6_ABI) },
+      ],
+      error
+    );
+  }
 }
 
 async function sendMessageFromEvmToAptos(messageString: string) {
-    let recipient = argv.aptosReceiver;
-    const chainConfig = getEvmChainConfig(argv.sourceChain);
+  const recipient = argv.aptosReceiver;
+  const chainConfig = getEvmChainConfig(argv.sourceChain);
 
-    const { ccipRouterAddress, ccipOnrampAddress, linkTokenAddress, explorerUrl, rpcUrlEnv } = chainConfig;
+  const {
+    ccipRouterAddress,
+    ccipOnrampAddress,
+    linkTokenAddress,
+    explorerUrl,
+    rpcUrlEnv,
+  } = chainConfig;
 
-    const rpcUrl = process.env[rpcUrlEnv];
-    if (!rpcUrl) {
-        throw new Error(`Please set the environment variable ${rpcUrlEnv}.`);
-    }
+  const rpcUrl = process.env[rpcUrlEnv];
+  if (!rpcUrl) {
+    throw new Error(`Please set the environment variable ${rpcUrlEnv}.`);
+  }
 
-    const provider = new ethers.JsonRpcProvider(rpcUrl);
-    const wallet = new ethers.Wallet(privateKey as string, provider);
+  const provider = new ethers.JsonRpcProvider(rpcUrl);
+  const wallet = new ethers.Wallet(privateKey as string, provider);
 
-    const ccipRouterContract = new ethers.Contract(ccipRouterAddress, RouterABI, wallet);
-    const ccipOnRampContract = new ethers.Contract(ccipOnrampAddress, OnRamp_1_6_ABI, wallet);
+  const ccipRouterContract = new ethers.Contract(
+    ccipRouterAddress,
+    RouterABI,
+    wallet
+  );
+  const ccipOnRampContract = new ethers.Contract(
+    ccipOnrampAddress,
+    OnRamp_1_6_ABI,
+    wallet
+  );
 
-    if (argv.feeToken === networkConfig.aptos.feeTokenNameLink) {
-        sendMessagePayLink(wallet, ccipRouterContract, ccipOnRampContract, recipient, messageString, linkTokenAddress, explorerUrl);
-    } else if (argv.feeToken === networkConfig.aptos.feeTokenNameNative) {
-        sendMessagePayNative(wallet, ccipRouterContract, ccipOnRampContract, recipient, messageString, explorerUrl);
-    } else {
-        throw new Error("Invalid fee token specified. Please specify fee token use --feeToken link or --feeToken native.");
-    }
+  if (argv.feeToken === networkConfig.aptos.feeTokenNameLink) {
+    sendMessagePayLink(
+      wallet,
+      ccipRouterContract,
+      ccipOnRampContract,
+      recipient,
+      messageString,
+      linkTokenAddress,
+      explorerUrl
+    );
+  } else if (argv.feeToken === networkConfig.aptos.feeTokenNameNative) {
+    sendMessagePayNative(
+      wallet,
+      ccipRouterContract,
+      ccipOnRampContract,
+      recipient,
+      messageString,
+      explorerUrl
+    );
+  } else {
+    throw new Error(
+      'Invalid fee token specified. Please specify fee token use --feeToken link or --feeToken native.'
+    );
+  }
 }
 
-
 async function handleError(
-    interfaces: { name: string; iface: Interface }[],
-    err: any
+  interfaces: { name: string; iface: Interface }[],
+  err: any
 ) {
-    const data = err.data ?? err.error?.data;
+  const data = err.data ?? err.error?.data;
 
-    if (!data || typeof data !== "string" || !data.startsWith("0x")) {
-        console.error("No valid revert data.");
-        return;
+  if (!data || typeof data !== 'string' || !data.startsWith('0x')) {
+    console.error('No valid revert data.');
+    return;
+  }
+
+  const selector = data.slice(0, 10);
+
+  if (selector === '0x08c379a0') {
+    // Error(string)
+    try {
+      const fallbackInterface = interfaces[0].iface; // Pick any to decode standard error
+      const reason = fallbackInterface.decodeErrorResult('Error(string)', data);
+      console.log('Require/Revert with string:', reason[0]);
+    } catch {
+      console.log('Failed to decode standard error.');
+    }
+  } else if (selector === '0x4e487b71') {
+    // Panic(uint256)
+    const code = parseInt(data.slice(10, 74), 16);
+    console.log('Panic with code:', code);
+  } else {
+    // Try parsing with each interface
+    let matched = false;
+    for (const { iface } of interfaces) {
+      try {
+        const decoded = iface.parseError(data);
+        // console.log(`Custom Error matched in interface: ${name}`);
+        console.log('Custom Error:', decoded!.name);
+
+        if (decoded!.args.length > 0) {
+          const namedArgs: { [key: string]: any } = {};
+          decoded!.fragment.inputs.forEach((input, index) => {
+            namedArgs[input.name] = decoded!.args[index];
+          });
+          console.log({ args: namedArgs });
+        }
+
+        matched = true;
+        break;
+      } catch {
+        continue;
+      }
     }
 
-    const selector = data.slice(0, 10);
-
-    if (selector === "0x08c379a0") {
-        // Error(string)
-        try {
-            const fallbackInterface = interfaces[0].iface; // Pick any to decode standard error
-            const reason = fallbackInterface.decodeErrorResult("Error(string)", data);
-            console.log("Require/Revert with string:", reason[0]);
-        } catch {
-            console.log("Failed to decode standard error.");
-        }
-    } else if (selector === "0x4e487b71") {
-        // Panic(uint256)
-        const code = parseInt(data.slice(10, 74), 16);
-        console.log("Panic with code:", code);
-    } else {
-        // Try parsing with each interface
-        let matched = false;
-        for (const { name, iface } of interfaces) {
-            try {
-                const decoded = iface.parseError(data);
-                // console.log(`Custom Error matched in interface: ${name}`);
-                console.log("Custom Error:", decoded!.name);
-
-                if (decoded!.args.length > 0) {
-                    const namedArgs: { [key: string]: any } = {};
-                    decoded!.fragment.inputs.forEach((input, index) => {
-                        namedArgs[input.name] = decoded!.args[index];
-                    });
-                    console.log({ args: namedArgs });
-                }
-
-                matched = true;
-                break;
-            } catch {
-                continue;
-            }
-        }
-
-        if (!matched) {
-            console.log("Unknown error format or not found in any interface.");
-        }
+    if (!matched) {
+      console.log('Unknown error format or not found in any interface.');
     }
+  }
 }
 
 sendMessageFromEvmToAptos(argv.msgString);

@@ -876,4 +876,4 @@ export default [
     inputs: [{ name: 'token', type: 'address', internalType: 'address' }],
   },
   // generate:end
-] as const
+] as const;

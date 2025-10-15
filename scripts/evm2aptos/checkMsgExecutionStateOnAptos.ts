@@ -1,7 +1,7 @@
-import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
+import { Aptos, AptosConfig, Network } from '@aptos-labs/ts-sdk';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { networkConfig } from "../../helper-config";
+import { networkConfig } from '../../helper-config';
 
 const config = new AptosConfig({ network: Network.TESTNET });
 const aptos = new Aptos(config);
@@ -14,47 +14,47 @@ const argv = yargs(hideBin(process.argv))
   })
   .parseSync();
 
-
 async function getModuleEvents() {
   // get message Id from user input
-  let msgId = argv.msgId;
-  if (msgId.length !== 66 || !msgId.startsWith("0x")) {
-    throw new Error("Format of message id is incorrect.");
+  const msgId = argv.msgId;
+  if (msgId.length !== 66 || !msgId.startsWith('0x')) {
+    throw new Error('Format of message id is incorrect.');
   }
 
-  const ccipRouterModuleAddr = networkConfig.aptos.ccipObjectAddress
+  const ccipRouterModuleAddr = networkConfig.aptos.ccipObjectAddress;
 
   try {
-
     async function getStateAddress(aptos: Aptos): Promise<string> {
       const stateAddress = await aptos.view({
         payload: {
           function: `${ccipRouterModuleAddr}::offramp::get_state_address`,
           typeArguments: [],
           functionArguments: [],
-        }
+        },
       });
       return stateAddress[0] as string;
     }
 
     const stateAddress = await getStateAddress(aptos);
-    
+
     const events = await aptos.getAccountEventsByEventType({
       accountAddress: stateAddress,
       eventType: `${ccipRouterModuleAddr}::offramp::ExecutionStateChanged`,
       options: {
         limit: 100,
-        orderBy: [{ transaction_version: "desc" }] 
+        orderBy: [{ transaction_version: 'desc' }],
       },
     });
 
-    let selectedEvent = events.filter(event => event.data.message_id == msgId);
+    const selectedEvent = events.filter(
+      (event) => event.data.message_id == msgId
+    );
     if (!selectedEvent.length) {
-      console.log("No execution state found for the given message ID yet. Please wait for the transaction to be processed.");
-    }
-
-    else {
-      let state = selectedEvent[0].data.state
+      console.log(
+        'No execution state found for the given message ID yet. Please wait for the transaction to be processed.'
+      );
+    } else {
+      const state = selectedEvent[0].data.state;
 
       if (state === 0) {
         console.log(`Execution state for CCIP message ${msgId} is UNTOUCHED`);
@@ -63,7 +63,7 @@ async function getModuleEvents() {
       }
     }
   } catch (error) {
-    console.error("Error fetching module events:", error);
+    console.error('Error fetching module events:', error);
   }
 }
 
