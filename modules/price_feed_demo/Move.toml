@@ -5,9 +5,11 @@ authors = []
 
 [addresses]
 price_feed = "_"
-owner = "9c57740685301c316158afd34608cf8286b869ce164301f4903180cc52605ad9"
+owner = "0xc10291bb05fe4c3392cabb17fe2945bb530f5902b4c83ecaaceb0c35c7e11182"
 data_feeds = "0xf1099f135ddddad1c065203431be328a408b0ca452ada70374ce26bd2b32fdd3"
 platform = "0x516e771e1b4a903afe74c27d057c65849ecc1383782f6642d7ff21425f4f9c99"
+platform_secondary = "0xfe335602574abdd34b82f6260bf01b426b902819663fdb801a0c75b2c68f517f"
+owner_secondary = "0xc10291bb05fe4c3392cabb17fe2945bb530f5902b4c83ecaaceb0c35c7e11182"
 move_stdlib = "0x1"
 
 [dev-addresses]
